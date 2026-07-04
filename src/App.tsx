@@ -1,5 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useEffect, useState, useRef } from "react";
 import { TaskInput } from "./components/TaskInput";
 import { TaskList } from "./components/TaskList";
 import { TaskSearch } from "./components/TaskSearch";
@@ -12,42 +11,36 @@ import { FocusAnalytics } from "./components/FocusAnalytics";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { NotesPanel } from "./components/NotesPanel";
 import { DayPlanner } from "./components/DayPlanner";
+import { Onboarding } from "./components/Onboarding";
 import { useTaskStore } from "./store";
-import { Settings, Sparkles, BarChart3, Calendar, BrainCircuit, Download, Edit3, Clock } from "lucide-react";
+import { initAnalytics } from "./lib/analytics";
+import { ListChecks, BarChart3, Calendar, BrainCircuit, Edit3, Settings, Clock, Download, FileText, Table } from "lucide-react";
 import { exportToCSVFile, exportToMarkdownFile } from "./lib/export";
 
 function App() {
-  const {
-    tasks, loading, newTaskId, settingsOpen, streak,
-    loadTasks, updateText, remove, setSettingsOpen,
-  } = useTaskStore();
-
+  const { tasks, loading, newTaskId, loadTasks, updateText, remove, streak, isPro, onboardingDone, setOnboardingDone } = useTaskStore();
   const [mounted, setMounted] = useState(false);
-  const [shortcutOverlayOpen, setShortcutOverlayOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [focusOpen, setFocusOpen] = useState(false);
   const [dayPlannerOpen, setDayPlannerOpen] = useState(false);
+  const [focusOpen, setFocusOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shortcutOverlayOpen, setShortcutOverlayOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadTasks();
+    initAnalytics();
     requestAnimationFrame(() => setMounted(true));
   }, [loadTasks]);
-
-  const handleEscape = useCallback(() => {
-    if (settingsOpen) {
-      setSettingsOpen(false);
-    } else {
-      getCurrentWindow().hide();
-    }
-  }, [settingsOpen, setSettingsOpen]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        if (exportOpen) { setExportOpen(false); return; }
         if (shortcutOverlayOpen) { setShortcutOverlayOpen(false); return; }
-        handleEscape();
+        if (settingsOpen) { setSettingsOpen(false); return; }
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "f") {
         e.preventDefault();
@@ -57,175 +50,104 @@ function App() {
         e.preventDefault();
         useTaskStore.getState().pomodoroStart();
       }
-      if (e.key === "?" && !settingsOpen && !shortcutOverlayOpen) {
-        setShortcutOverlayOpen(true);
-      }
-      if (e.key === "n" && !e.metaKey && !e.ctrlKey && !e.altKey && !settingsOpen) {
-        const input = document.querySelector<HTMLInputElement>(
-          'input[type="text"]'
-        );
-        input?.focus();
+      if (e.key === "n" && !e.metaKey && !e.ctrlKey) {
+        document.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [handleEscape, settingsOpen, shortcutOverlayOpen]);
+  }, [exportOpen, shortcutOverlayOpen, settingsOpen]);
 
   return (
-    <div className={`bg-surface-deep rounded-[16px] p-[1.5px] h-full ${mounted ? "animate-window-enter" : "opacity-0"}`}>
-      {/* Inner core */}
-      <div className="bg-surface-primary rounded-[14px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] flex flex-col h-full overflow-hidden">
-        {/* Header */}
-        <div
-          className="flex items-center gap-3 px-5 pt-4 pb-3"
-          data-tauri-drag-region
-        >
-          {/* Brand glow dot */}
-          <div className="w-[18px] h-[18px] rounded-full bg-surface-glass border border-border-subtle flex items-center justify-center">
-            <div className="w-[8px] h-[8px] rounded-full bg-accent-primary shadow-[0_0_8px_rgba(139,126,255,0.5)] animate-glow-pulse" />
-          </div>
+    <div className={`h-full flex flex-col bg-[#0a0a0a] ${mounted ? "animate-fade-in" : "opacity-0"}`}>
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 pt-3 pb-2 select-none">
+        <ListChecks size={16} className="text-[#8b7eff]" />
+        <span className="text-xs font-medium text-[#a0a0a0]">FocusTap</span>
+        {streak > 0 && (
+          <span className="text-[11px] text-[#eab308]">{streak}🔥</span>
+        )}
+        {isPro && (
+          <span className="text-[10px] font-medium text-accent-primary ml-1">PRO</span>
+        )}
 
-          <span className="text-xs font-medium tracking-wide uppercase text-text-secondary select-none">
-            FocusTap
-          </span>
-
-          {/* Streak flame */}
-          {streak > 0 && (
-            <span className="flex items-center gap-1 text-[11px] text-amber-400/80 select-none">
-              <Sparkles size={12} className="animate-flame" />
-              {streak}
-            </span>
-          )}
-
-          {/* Header action buttons */}
-          <div className="ml-auto flex items-center gap-1.5">
-            <button
-              onClick={() => setStatsOpen(true)}
-              className="text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
-              title="Statistics"
-            >
-              <BarChart3 size={13} />
-            </button>
-            <button
-              onClick={() => setCalendarOpen(true)}
-              className="text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
-              title="Calendar"
-            >
-              <Calendar size={13} />
-            </button>
-            <button
-              onClick={() => setDayPlannerOpen(true)}
-              className="text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
-              title="Day Planner"
-            >
-              <Clock size={13} />
-            </button>
-            <button
-              onClick={() => useTaskStore.getState().setNotesPanelOpen(true)}
-              className="text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
-              title="Notepad"
-            >
-              <Edit3 size={13} />
-            </button>
-            <button
-              onClick={() => setFocusOpen(true)}
-              className="text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
-              title="Focus Analytics"
-            >
-              <BrainCircuit size={13} />
-            </button>
-            <button
-              onClick={() => {
-                const m = confirm("Export as Markdown? Cancel for CSV.");
-                if (m) exportToMarkdownFile();
-                else exportToCSVFile();
-              }}
-              className="text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
-              title="Export"
-            >
+        {/* Toolbar */}
+        <div className="ml-auto flex items-center gap-1">
+          <button onClick={() => setStatsOpen(true)} className="text-[#555] hover:text-[#f0f0f0] transition-colors cursor-pointer p-1" title="Statistics">
+            <BarChart3 size={13} />
+          </button>
+          <button onClick={() => setCalendarOpen(true)} className="text-[#555] hover:text-[#f0f0f0] transition-colors cursor-pointer p-1" title="Calendar">
+            <Calendar size={13} />
+          </button>
+          <button onClick={() => setDayPlannerOpen(true)} className="text-[#555] hover:text-[#f0f0f0] transition-colors cursor-pointer p-1" title="Day Planner">
+            <Clock size={13} />
+          </button>
+          <button onClick={() => useTaskStore.getState().setNotesPanelOpen(true)} className="text-[#555] hover:text-[#f0f0f0] transition-colors cursor-pointer p-1" title="Notes">
+            <Edit3 size={13} />
+          </button>
+          <button onClick={() => setFocusOpen(true)} className="text-[#555] hover:text-[#f0f0f0] transition-colors cursor-pointer p-1" title="Focus">
+            <BrainCircuit size={13} />
+          </button>
+          <div className="relative">
+            <button onClick={() => setExportOpen(!exportOpen)} className="text-[#555] hover:text-[#f0f0f0] transition-colors cursor-pointer p-1" title="Export">
               <Download size={13} />
             </button>
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
-              aria-label="Open settings"
-            >
-              <Settings size={14} />
-            </button>
+            {exportOpen && (
+              <div className="absolute right-0 top-full mt-1 w-[130px] bg-[#1a1a1a] border border-[rgba(255,255,255,0.06)] rounded-[6px] shadow-xl z-50 overflow-hidden">
+                <button onClick={() => { setExportOpen(false); exportToMarkdownFile(); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#a0a0a0] hover:bg-[rgba(139,126,255,0.1)] hover:text-[#f0f0f0] transition-colors cursor-pointer">
+                  <FileText size={12} /> Markdown
+                </button>
+                <button onClick={() => { setExportOpen(false); exportToCSVFile(); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#a0a0a0] hover:bg-[rgba(139,126,255,0.1)] hover:text-[#f0f0f0] transition-colors cursor-pointer">
+                  <Table size={12} /> CSV
+                </button>
+              </div>
+            )}
           </div>
+          <button onClick={() => setSettingsOpen(true)} className="text-[#555] hover:text-[#f0f0f0] transition-colors cursor-pointer p-1" title="Settings">
+            <Settings size={14} />
+          </button>
         </div>
-
-          {/* Pomodoro Timer */}
-          <div className="px-5 pb-2">
-            <PomodoroTimer />
-          </div>
-
-          {/* Main content */}
-        <div className="flex flex-col flex-1 px-5 pb-4 pt-2 min-h-0 gap-3">
-          <TaskInput />
-
-          {/* Quick find */}
-          <TaskSearch inputRef={searchRef} onSearchActive={() => {}} />
-
-          {loading && (
-            <div className="text-center py-6 text-text-tertiary/40 text-xs font-light">
-              Loading...
-            </div>
-          )}
-
-          {!loading && (
-            <TaskList
-              tasks={tasks}
-              onUpdateText={updateText}
-              onDelete={remove}
-              focusId={newTaskId}
-              streak={streak}
-            />
-          )}
-        </div>
-
-        {/* Settings panel */}
-        <SettingsPanel
-          open={settingsOpen}
-          onClose={() => setSettingsOpen(false)}
-        />
-
-        {/* Task detail panel */}
-        <TaskDetail />
-
-        {/* Shortcut overlay */}
-        <ShortcutOverlay
-          open={shortcutOverlayOpen}
-          onClose={() => setShortcutOverlayOpen(false)}
-        />
-
-        {/* Statistics panel */}
-        <StatisticsPanel
-          open={statsOpen}
-          onClose={() => setStatsOpen(false)}
-        />
-
-        {/* Calendar view */}
-        <CalendarView
-          open={calendarOpen}
-          onClose={() => setCalendarOpen(false)}
-        />
-
-        {/* Focus Analytics */}
-        <FocusAnalytics
-          open={focusOpen}
-          onClose={() => setFocusOpen(false)}
-        />
-
-        {/* Notepad */}
-        <NotesPanel />
-
-        {/* Day Planner */}
-        <DayPlanner
-          open={dayPlannerOpen}
-          onClose={() => setDayPlannerOpen(false)}
-        />
       </div>
+
+      {/* Pomodoro */}
+      <div className="px-4 pb-1">
+        <PomodoroTimer />
+      </div>
+
+      {/* Main */}
+      <div className="flex flex-col flex-1 px-4 pb-4 min-h-0 gap-2">
+        <TaskInput />
+        <TaskSearch inputRef={searchRef as React.RefObject<HTMLInputElement | null>} onSearchActive={() => {}} />
+
+        {loading && (
+          <div className="text-center py-6 text-[#666] text-xs">Loading...</div>
+        )}
+
+        {!loading && (
+          <TaskList
+            tasks={tasks}
+            onUpdateText={updateText}
+            onDelete={remove}
+            focusId={newTaskId}
+            streak={streak}
+          />
+        )}
+      </div>
+
+      {/* Onboarding */}
+      {!loading && !onboardingDone && !settingsOpen && (
+        <Onboarding onComplete={setOnboardingDone} />
+      )}
+
+      {/* Panels */}
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <TaskDetail />
+      <ShortcutOverlay open={shortcutOverlayOpen} onClose={() => setShortcutOverlayOpen(false)} />
+      <StatisticsPanel open={statsOpen} onClose={() => setStatsOpen(false)} />
+      <CalendarView open={calendarOpen} onClose={() => setCalendarOpen(false)} />
+      <FocusAnalytics open={focusOpen} onClose={() => setFocusOpen(false)} />
+      <NotesPanel />
+      <DayPlanner open={dayPlannerOpen} onClose={() => setDayPlannerOpen(false)} />
     </div>
   );
 }

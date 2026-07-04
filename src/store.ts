@@ -24,6 +24,8 @@ import {
   deleteNote,
 } from "./lib/db";
 import { playChime } from "./lib/sounds";
+import { showToast } from "./components/Toast";
+import { trackEvent } from "./lib/analytics";
 
 type PomodoroPhase = "idle" | "work" | "break";
 
@@ -77,6 +79,17 @@ interface TaskState {
   pomodoroTick: () => void;
   setPomodoroWorkDuration: (seconds: number) => Promise<void>;
   setPomodoroBreakDuration: (seconds: number) => Promise<void>;
+
+  /* License / Pro */
+  isPro: boolean;
+  licenseState: "unknown" | "active" | "none";
+  checkLicense: () => Promise<void>;
+  activateLicense: (key: string) => Promise<boolean>;
+  deactivateLicense: () => Promise<void>;
+
+  /* Onboarding */
+  onboardingDone: boolean;
+  setOnboardingDone: () => void;
 }
 
 export const useTaskStore = create<TaskState>((set, get) => ({
@@ -98,49 +111,74 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   pomodoroBreakDuration: 300,
   pomodoroActiveTaskId: null,
 
+  isPro: false,
+  licenseState: "unknown",
+
+  onboardingDone: false,
+
   loadTasks: async () => {
     set({ loading: true });
     try {
-      const [tasks, soundVal, streak, workDur, breakDur] = await Promise.all([
+      const [tasks, soundVal, streak, workDur, breakDur, onboardingDoneVal] = await Promise.all([
         listTodayTasks(),
         getSetting("sound_enabled"),
         getStreak(),
         getSetting("pomodoro_work"),
         getSetting("pomodoro_break"),
+        getSetting("onboarding_done"),
       ]);
       const workDuration = workDur ? parseInt(workDur, 10) : 1500;
       const breakDuration = breakDur ? parseInt(breakDur, 10) : 300;
       set({
         tasks,
         loading: false,
+        newTaskId: null,
         soundEnabled: soundVal !== "false",
         streak,
         pomodoroWorkDuration: workDuration,
         pomodoroBreakDuration: breakDuration,
         pomodoroTimeRemaining: workDuration,
+        onboardingDone: onboardingDoneVal === "true",
       });
+      // Check license on startup
+      get().checkLicense();
+      trackEvent("app_opened");
     } catch (e) {
       console.error("Failed to load tasks", e);
+      showToast("Could not load tasks");
       set({ loading: false });
     }
   },
 
   addTask: async (text?: string, priority?: number, tags?: string) => {
     try {
-      const id = await createTask();
-      if (text?.trim()) {
-        await updateTaskText(id, text.trim());
-      }
-      if (priority !== undefined && priority > 0) {
-        await updateTaskPriority(id, priority);
-      }
-      if (tags) {
-        await updateTaskTags(id, tags);
-      }
-      set({ newTaskId: id });
-      await get().loadTasks();
+      const id = await createTask(text?.trim() || '', priority, tags);
+      const now = localDatetime();
+      const nowDate = now.slice(0, 10);
+      const newTask: Task = {
+        id,
+        text: text?.trim() || '',
+        is_done: false,
+        created_at: now,
+        completed_at: null,
+        priority: priority || 0,
+        tags: tags || '',
+        sort_order: 0,
+        recurrence: '',
+        notes: '',
+        parent_id: null,
+        task_date: nowDate,
+        time_block_id: null,
+      };
+      set((state) => ({
+        tasks: [...state.tasks, newTask],
+        newTaskId: id,
+      }));
+      trackEvent("task_created");
+      showToast("Task added", "success");
     } catch (e) {
       console.error("Failed to create task", e);
+      showToast("Could not add task");
     }
   },
 
@@ -177,11 +215,15 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       if (becomingDone && get().soundEnabled) {
         playChime();
       }
+      if (becomingDone) {
+        trackEvent("task_completed");
+      }
       // Refresh streak after toggling
       const streak = await getStreak();
       set({ streak });
     } catch (e) {
       console.error("Failed to toggle task", e);
+      showToast("Could not toggle task");
     }
   },
 
@@ -191,6 +233,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       set((state) => ({
         tasks: state.tasks.filter((t) => t.id !== id),
       }));
+      trackEvent("task_deleted");
     } catch (e) {
       console.error("Failed to delete task", e);
     }
@@ -260,8 +303,27 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   addSubtask: async (parentId) => {
     try {
       const id = await createSubtask(parentId);
-      set({ newTaskId: id });
-      await get().loadTasks();
+      const now = localDatetime();
+      const nowDate = now.slice(0, 10);
+      const newSub: Task = {
+        id,
+        text: '',
+        is_done: false,
+        created_at: now,
+        completed_at: null,
+        priority: 0,
+        tags: '',
+        sort_order: 0,
+        recurrence: '',
+        notes: '',
+        parent_id: parentId,
+        task_date: nowDate,
+        time_block_id: null,
+      };
+      set((state) => ({
+        tasks: [...state.tasks, newSub],
+        newTaskId: id,
+      }));
     } catch (e) {
       console.error("Failed to create subtask", e);
     }
@@ -273,11 +335,26 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       if (!task) return;
       const becomingDone = !task.is_done;
       if (becomingDone) {
-        await completeTaskWithChildren(id);
+        const { parentAutoCompleted } = await completeTaskWithChildren(id);
+        const now = localDatetime();
+        set((state) => ({
+          tasks: state.tasks.map((t) => {
+            if (t.id === id) return { ...t, is_done: true, completed_at: now };
+            if (parentAutoCompleted && t.id === task.parent_id)
+              return { ...t, is_done: true, completed_at: now };
+            return t;
+          }),
+        }));
       } else {
         await uncompleteTask(id);
+        set((state) => ({
+          tasks: state.tasks.map((t) => {
+            if (t.id === id) return { ...t, is_done: false, completed_at: null };
+            if (t.id === task.parent_id) return { ...t, is_done: false, completed_at: null };
+            return t;
+          }),
+        }));
       }
-      await get().loadTasks();
       const streak = await getStreak();
       set({ streak });
       if (becomingDone && get().soundEnabled) {
@@ -285,6 +362,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }
     } catch (e) {
       console.error("Failed to toggle with children", e);
+      showToast("Could not toggle task");
     }
   },
 
@@ -407,5 +485,49 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     } catch (e) {
       console.error("Failed to persist break duration", e);
     }
+  },
+
+  /* License */
+  checkLicense: async () => {
+    try {
+      const { bootstrapState } = await import("@licenseseat/tauri-plugin");
+      const state = await bootstrapState();
+      set({ isPro: state.isValid && state.isActivated, licenseState: state.isValid ? "active" : "none" });
+    } catch {
+      set({ isPro: false, licenseState: "none" });
+    }
+  },
+
+  activateLicense: async (key) => {
+    try {
+      const { activateAndGetState } = await import("@licenseseat/tauri-plugin");
+      const state = await activateAndGetState(key);
+      const active = state.isValid && state.isActivated;
+      set({ isPro: active, licenseState: active ? "active" : "none" });
+      if (active) {
+        trackEvent("license_activated", { plan: state.planKey ?? "pro" });
+        showToast("Pro activated!", "success");
+      }
+      return active;
+    } catch {
+      showToast("License activation failed");
+      return false;
+    }
+  },
+
+  deactivateLicense: async () => {
+    try {
+      const { deactivate } = await import("@licenseseat/tauri-plugin");
+      await deactivate();
+    } catch {
+      // Best-effort
+    }
+    set({ isPro: false, licenseState: "none" });
+  },
+
+  /* Onboarding */
+  setOnboardingDone: () => {
+    set({ onboardingDone: true });
+    setSetting("onboarding_done", "true");
   },
 }));
