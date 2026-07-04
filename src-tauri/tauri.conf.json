@@ -16,15 +16,24 @@
         "label": "main",
         "width": 420,
         "height": 560,
-        "decorations": false,
-        "visible": false,
-        "alwaysOnTop": true,
+        "decorations": true,
+        "visible": true,
         "center": true,
-        "resizable": false
+        "resizable": true,
+        "minWidth": 380,
+        "minHeight": 400
       }
     ],
     "security": {
       "csp": null
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "dialog": false,
+      "endpoints": ["https://api.github.com/repos/YOUR_USERNAME/focustap/releases/latest"],
+      "pubkey": "YOUR_PUBLIC_KEY_HERE"
     }
   },
   "bundle": {

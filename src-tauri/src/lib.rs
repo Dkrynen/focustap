@@ -1,6 +1,29 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_sql::{Migration, MigrationKind};
+
+pub struct FocusState {
+    pub recently_shown: Arc<AtomicBool>,
+}
+
+fn show_window(window: &tauri::WebviewWindow) {
+    let _ = window.show();
+    let _ = window.set_focus();
+    let _ = window.center();
+    if let Some(state) = window.try_state::<FocusState>() {
+        state.recently_shown.store(true, Ordering::SeqCst);
+    }
+}
+
+fn toggle_window(window: &tauri::WebviewWindow) {
+    if window.is_visible().unwrap_or(false) {
+        let _ = window.hide();
+    } else {
+        show_window(window);
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -106,9 +129,16 @@ pub fn run() {
                 .add_migrations("sqlite:focustap.db", migrations)
                 .build(),
         )
+        .plugin(tauri_plugin_licenseseat::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_store::Builder::default().build())
         .setup(|app| {
             use tauri::menu::{Menu, MenuItem};
             use tauri::tray::TrayIconBuilder;
+
+            app.manage(FocusState {
+                recently_shown: Arc::new(AtomicBool::new(false)),
+            });
 
             let show = MenuItem::with_id(app, "show", "Show FocusTap", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
@@ -125,9 +155,7 @@ pub fn run() {
                     }
                     "show" => {
                         if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                            let _ = window.center();
+                            show_window(&window);
                         }
                     }
                     _ => {}
@@ -142,13 +170,7 @@ pub fn run() {
                     {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
-                            if window.is_visible().unwrap() {
-                                let _ = window.hide();
-                            } else {
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                                let _ = window.center();
-                            }
+                            toggle_window(&window);
                         }
                     }
                 })
@@ -159,13 +181,7 @@ pub fn run() {
             app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
                 if event.state == ShortcutState::Pressed {
                     if let Some(window) = handle.get_webview_window("main") {
-                        if window.is_visible().unwrap() {
-                            let _ = window.hide();
-                        } else {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                            let _ = window.center();
-                        }
+                        toggle_window(&window);
                     }
                 }
             })?;
@@ -179,7 +195,8 @@ pub fn run() {
                     let _ = window.hide();
                 }
                 tauri::WindowEvent::Focused(false) => {
-                    let _ = window.hide();
+                    // Don't hide on focus loss — user complained they "can't reach" the app.
+                    // They can minimize via the app's close button or tray -> Quit.
                 }
                 _ => {}
             }

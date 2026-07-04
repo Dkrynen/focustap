@@ -18,6 +18,9 @@
     "sql:default",
     "sql:allow-execute",
     "sql:allow-select",
-    "autostart:default"
+    "autostart:default",
+    "licenseseat:default",
+    "updater:default",
+    "store:default"
   ]
 }
