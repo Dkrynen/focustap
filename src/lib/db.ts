@@ -1,16 +1,51 @@
 import Database from "@tauri-apps/plugin-sql";
 
 let db: Database | null = null;
+let dbPromise: Promise<Database> | null = null;
 
-export async function getDb(): Promise<Database> {
-  if (!db) {
-    db = await Database.load("sqlite:focustap.db");
-    // Ensure settings table exists
-    await db.execute(
+async function initDb(database: Database): Promise<Database> {
+  try {
+    await database.execute("PRAGMA journal_mode = WAL");
+    await database.execute("PRAGMA synchronous = NORMAL");
+    await database.execute("PRAGMA cache_size = -8192");
+    await database.execute("PRAGMA busy_timeout = 5000");
+  } catch (_) { /* pragmas are best-effort */ }
+
+  try {
+    await database.execute(
       "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
     );
-  }
-  return db;
+  } catch (_) { /* settings table is optional */ }
+
+  try {
+    await database.execute("CREATE INDEX IF NOT EXISTS idx_tasks_created ON tasks(date(created_at))");
+    await database.execute("CREATE INDEX IF NOT EXISTS idx_tasks_done ON tasks(is_done)");
+    await database.execute("CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_id)");
+    await database.execute("CREATE INDEX IF NOT EXISTS idx_tasks_task_date ON tasks(task_date)");
+    await database.execute("CREATE INDEX IF NOT EXISTS idx_tasks_sort ON tasks(sort_order)");
+    await database.execute("CREATE INDEX IF NOT EXISTS idx_notes_updated ON notes(updated_at)");
+    await database.execute("CREATE INDEX IF NOT EXISTS idx_activity_log_ts ON activity_log(timestamp)");
+  } catch (_) { /* indexes are best-effort */ }
+
+  return database;
+}
+
+export async function getDb(): Promise<Database> {
+  if (db) return db;
+  if (dbPromise) return dbPromise;
+  dbPromise = Database.load("sqlite:focustap.db")
+    .then(initDb)
+    .then((database) => {
+      db = database;
+      dbPromise = null;
+      return database;
+    })
+    .catch((e) => {
+      console.error("getDb init failed, will retry:", e);
+      dbPromise = null;
+      throw e;
+    });
+  return dbPromise;
 }
 
 export interface Task {
@@ -47,10 +82,19 @@ export interface ActivityLog {
   timestamp: string;
 }
 
-export async function createTask(): Promise<number> {
+export async function createTask(
+  text?: string,
+  priority?: number,
+  tags?: string,
+  parentId?: number,
+): Promise<number> {
   const database = await getDb();
   const result = await database.execute(
-    "INSERT INTO tasks (text, is_done, sort_order) VALUES ('', 0, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM tasks))"
+    `INSERT INTO tasks (text, is_done, sort_order, priority, tags, parent_id)
+     VALUES ($1, 0,
+       (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM tasks WHERE parent_id IS NULL),
+       $2, $3, $4)`,
+    [text || '', priority || 0, tags || '', parentId ?? null]
   );
   return result.lastInsertId ?? 0;
 }
@@ -248,51 +292,70 @@ export async function listSubtasks(parentId: number): Promise<Task[]> {
   );
 }
 
-export async function completeTaskWithChildren(id: number): Promise<void> {
+/** Complete a task, auto-completing parent if all siblings done.
+ *  Returns { parentAutoCompleted: boolean } for optimistic store update. */
+export async function completeTaskWithChildren(id: number): Promise<{ parentAutoCompleted: boolean }> {
   const database = await getDb();
-  const task = await database.select<{ parent_id: number | null }[]>(
-    "SELECT parent_id FROM tasks WHERE id = $1", [id]
-  );
-  if (task.length === 0) return;
-
-  await database.execute(
-    "UPDATE tasks SET is_done = 1, completed_at = datetime('now', 'localtime') WHERE id = $1",
-    [id]
-  );
-
-  const parentId = task[0].parent_id;
-  if (parentId) {
-    const siblings = await database.select<{ remaining: number }[]>(
-      "SELECT COUNT(*) as remaining FROM tasks WHERE parent_id = $1 AND is_done = 0",
-      [parentId]
+  await database.execute("BEGIN TRANSACTION");
+  try {
+    const task = await database.select<{ parent_id: number | null }[]>(
+      "SELECT parent_id FROM tasks WHERE id = $1", [id]
     );
-    if (siblings.length > 0 && siblings[0].remaining === 0) {
-      await database.execute(
-        "UPDATE tasks SET is_done = 1, completed_at = datetime('now', 'localtime') WHERE id = $1",
+    if (task.length === 0) { await database.execute("ROLLBACK"); return { parentAutoCompleted: false }; }
+
+    await database.execute(
+      "UPDATE tasks SET is_done = 1, completed_at = datetime('now', 'localtime') WHERE id = $1",
+      [id]
+    );
+
+    let parentAutoCompleted = false;
+    const parentId = task[0].parent_id;
+    if (parentId) {
+      const siblings = await database.select<{ remaining: number }[]>(
+        "SELECT COUNT(*) as remaining FROM tasks WHERE parent_id = $1 AND is_done = 0",
         [parentId]
       );
+      if (siblings.length > 0 && siblings[0].remaining === 0) {
+        await database.execute(
+          "UPDATE tasks SET is_done = 1, completed_at = datetime('now', 'localtime') WHERE id = $1",
+          [parentId]
+        );
+        parentAutoCompleted = true;
+      }
     }
+    await database.execute("COMMIT");
+    return { parentAutoCompleted };
+  } catch (e) {
+    await database.execute("ROLLBACK");
+    throw e;
   }
 }
 
 export async function uncompleteTask(id: number): Promise<void> {
   const database = await getDb();
-  const task = await database.select<{ parent_id: number | null }[]>(
-    "SELECT parent_id FROM tasks WHERE id = $1", [id]
-  );
-  if (task.length === 0) return;
+  await database.execute("BEGIN TRANSACTION");
+  try {
+    const task = await database.select<{ parent_id: number | null }[]>(
+      "SELECT parent_id FROM tasks WHERE id = $1", [id]
+    );
+    if (task.length === 0) { await database.execute("ROLLBACK"); return; }
 
-  await database.execute(
-    "UPDATE tasks SET is_done = 0, completed_at = NULL WHERE id = $1",
-    [id]
-  );
-
-  const parentId = task[0].parent_id;
-  if (parentId) {
     await database.execute(
       "UPDATE tasks SET is_done = 0, completed_at = NULL WHERE id = $1",
-      [parentId]
+      [id]
     );
+
+    const parentId = task[0].parent_id;
+    if (parentId) {
+      await database.execute(
+        "UPDATE tasks SET is_done = 0, completed_at = NULL WHERE id = $1",
+        [parentId]
+      );
+    }
+    await database.execute("COMMIT");
+  } catch (e) {
+    await database.execute("ROLLBACK");
+    throw e;
   }
 }
 
