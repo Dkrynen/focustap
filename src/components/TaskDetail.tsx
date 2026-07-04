@@ -63,13 +63,14 @@ export function TaskDetail() {
     }
   }, [selectedTaskId]);
 
+  // Sync external data only when not dirty (user isn't actively editing)
   useEffect(() => {
-    if (task && tasks.find((t) => t.id === task.id)) {
+    if (!dirty && task && tasks.find((t) => t.id === task.id)) {
       setEditText(task.text);
       setEditNotes(task.notes);
       setEditTags(task.tags);
     }
-  }, [task?.text, task?.notes, task?.tags]);
+  }, [task?.text, task?.notes, task?.tags, dirty]);
 
   const save = useCallback(async () => {
     if (!task) return;
@@ -109,11 +110,11 @@ export function TaskDetail() {
 
       {/* Slide-in panel */}
       <div
-        className="absolute right-0 top-0 h-full w-[300px] max-w-[90vw] glass-elevated
-                     rounded-l-[14px] shadow-2xl flex flex-col"
+        className={`absolute right-0 top-0 h-full w-[300px] max-w-[90vw] glass-elevated
+                     rounded-l-[14px] shadow-2xl flex flex-col
+                     transition-transform duration-200 ease-out-expo`}
         style={{
           transform: showContent ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
         {/* Header */}
