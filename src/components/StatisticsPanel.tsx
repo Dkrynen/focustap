@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import React from "react";
 import { X, TrendingUp, Calendar, Activity } from "lucide-react";
 import { getActivityLog, getStreakHistory, getPomodoroSessions, getStreak, type StreakDay } from "../lib/db";
 
@@ -245,35 +246,38 @@ export function StatisticsPanel({ open, onClose }: StatisticsPanelProps) {
                     <div key={h} className="text-text-quaternary text-center">{h}</div>
                   ))}
                   {/* Day rows */}
-                  {DAYS.map((day) => (
-                    <>
-                      <div key={day} className="text-text-quaternary pr-1 leading-none pt-0.5">{day}</div>
-                      {HOURS.map((hour) => {
-                        const key = `${day}-${hour}`;
-                        const val = hourlyData[key] || 0;
-                        const intensity = maxHeat > 0 ? val / maxHeat : 0;
-                        return (
-                          <div
-                            key={key}
-                            className="relative group"
-                          >
+                  {DAYS.map((day) => {
+                    const dayKey = day;
+                    return (
+                      <React.Fragment key={dayKey}>
+                        <div className="text-text-quaternary pr-1 leading-none pt-0.5">{day}</div>
+                        {HOURS.map((hour) => {
+                          const key = `${day}-${hour}`;
+                          const val = hourlyData[key] || 0;
+                          const intensity = maxHeat > 0 ? val / maxHeat : 0;
+                          return (
                             <div
-                              className="w-full aspect-square rounded-[2px] transition-colors cursor-pointer"
-                              style={{
-                                background: val === 0 ? "rgba(255,255,255,0.03)"
-                                  : `rgba(139,126,255,${0.2 + intensity * 0.6})`,
-                              }}
-                            />
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
-                              <div className="bg-surface-elevated border border-border-default rounded-[4px] px-2 py-1 text-[10px] text-text-primary whitespace-nowrap">
-                                {day} {hour}:00 — {val} sessions
+                              key={key}
+                              className="relative group"
+                            >
+                              <div
+                                className="w-full aspect-square rounded-[2px] transition-colors cursor-pointer"
+                                style={{
+                                  background: val === 0 ? "rgba(255,255,255,0.03)"
+                                    : `rgba(139,126,255,${0.2 + intensity * 0.6})`,
+                                }}
+                              />
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
+                                <div className="bg-surface-elevated border border-border-default rounded-[4px] px-2 py-1 text-[10px] text-text-primary whitespace-nowrap">
+                                  {day} {hour}:00 — {val} sessions
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </>
-                  ))}
+                          );
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
               </div>
             </div>
