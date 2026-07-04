@@ -1,0 +1,103 @@
+name: Release
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  APPLE_ID: ${{ secrets.APPLE_ID }}
+  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+  CERTIFICATE_OSX_P12: ${{ secrets.CERTIFICATE_OSX_P12 }}
+  CERTIFICATE_OSX_PASSWORD: ${{ secrets.CERTIFICATE_OSX_PASSWORD }}
+  WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+  WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+  TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+  TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+jobs:
+  build-and-release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            bundle-targets: deb,AppImage
+          - platform: windows-2022
+            target: x86_64-pc-windows-msvc
+            bundle-targets: msi
+          - platform: macos-13
+            target: aarch64-apple-darwin
+            bundle-targets: dmg
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build and sign
+        uses: tauri-apps/tauri-action@v2
+        id: tauri-build
+        with:
+          args: --bundles ${{ matrix.bundle-targets }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: focustap-${{ matrix.target }}
+          path: |
+            src-tauri/target/release/bundle/**/*
+            !src-tauri/target/release/bundle/**/*.dbg
+
+      - name: Upload update manifest
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: actions/upload-artifact@v4
+        with:
+          name: updater-manifest
+          path: src-tauri/target/release/bundle/**/*.json
+
+  create-release:
+    needs: build-and-release
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate release notes
+        run: |
+          echo "## FocusTap ${{ github.ref_name }}" > release-notes.md
+          echo "" >> release-notes.md
+          echo "See the [changelog](CHANGELOG.md) for details." >> release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            focustap-*/**/*
+          body_path: release-notes.md
+          generate_release_notes: true
