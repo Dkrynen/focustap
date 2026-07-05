@@ -3,25 +3,36 @@ use std::sync::Arc;
 use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_sql::{Migration, MigrationKind};
+use tracing::{error, info};
 
 pub struct FocusState {
     pub recently_shown: Arc<AtomicBool>,
 }
 
 fn show_window(window: &tauri::WebviewWindow) {
-    let _ = window.show();
-    let _ = window.set_focus();
-    let _ = window.center();
+    if let Err(e) = window.show() {
+        error!(?e, "failed to show window");
+    }
+    if let Err(e) = window.set_focus() {
+        error!(?e, "failed to set window focus");
+    }
+    if let Err(e) = window.center() {
+        error!(?e, "failed to center window");
+    }
     if let Some(state) = window.try_state::<FocusState>() {
         state.recently_shown.store(true, Ordering::SeqCst);
     }
 }
 
 fn toggle_window(window: &tauri::WebviewWindow) {
-    if window.is_visible().unwrap_or(false) {
-        let _ = window.hide();
-    } else {
-        show_window(window);
+    match window.is_visible() {
+        Ok(true) => {
+            if let Err(e) = window.hide() {
+                error!(?e, "failed to hide window");
+            }
+        }
+        Ok(false) => show_window(window),
+        Err(e) => error!(?e, "failed to check window visibility"),
     }
 }
 
@@ -117,6 +128,14 @@ pub fn run() {
         },
     ];
 
+    // Initialize structured logging
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "focustap=info".into()),
+        )
+        .init();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(
@@ -158,7 +177,9 @@ pub fn run() {
                             show_window(&window);
                         }
                     }
-                    _ => {}
+                    other => {
+                        info!(id = %other, "unknown tray menu event");
+                    }
                 })
                 .on_tray_icon_event(|tray, event| {
                     use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
@@ -198,7 +219,9 @@ pub fn run() {
                     // Don't hide on focus loss — user complained they "can't reach" the app.
                     // They can minimize via the app's close button or tray -> Quit.
                 }
-                _ => {}
+                other => {
+                    info!(?other, "unknown window event");
+                }
             }
         })
         .run(tauri::generate_context!())

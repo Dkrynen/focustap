@@ -15,12 +15,15 @@
     "core:window:allow-center",
     "core:window:allow-start-dragging",
     "core:tray:default",
+    "global-shortcut:default",
     "sql:default",
     "sql:allow-execute",
     "sql:allow-select",
     "autostart:default",
     "licenseseat:default",
     "updater:default",
-    "store:default"
+    "store:default",
+    "dialog:default",
+    "fs:default"
   ]
 }
