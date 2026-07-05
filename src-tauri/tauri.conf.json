@@ -29,6 +29,10 @@
     }
   },
   "plugins": {
+    "licenseseat": {
+      "apiKey": "pk_test_placeholder",
+      "productSlug": "focustap"
+    },
     "updater": {
       "active": true,
       "dialog": false,
