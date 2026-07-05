@@ -10,10 +10,10 @@ const GROUPS = [
     title: "Tasks",
     shortcuts: [
       { keys: "n", desc: "Focus task input" },
-      { keys: "↑ ↓ / j k", desc: "Navigate task list" },
+      { keys: "↑↓", desc: "Navigate task list" },
       { keys: "Enter", desc: "Toggle task complete" },
+      { keys: "E", desc: "Edit task details (when selected)" },
       { keys: "Delete / Backspace", desc: "Delete selected task" },
-      { keys: "Double-click", desc: "Open task details" },
     ],
   },
   {

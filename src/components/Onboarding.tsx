@@ -19,7 +19,7 @@ const steps = [
   {
     icon: <Sparkles size={32} className="text-accent-primary" />,
     title: "Pro Features",
-    description: "Upgrade to Pro for cloud sync, backup/restore, and priority support. Find it in Settings.",
+    description: "Upgrade to Pro for backup/restore, priority support, and more. Find it in Settings.",
   },
 ];
 
