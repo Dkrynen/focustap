@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: ubuntu-22.04
+          - platform: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             bundle-targets: deb,AppImage
           - platform: windows-2022
@@ -48,7 +48,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-22.04'
+        if: matrix.platform == 'ubuntu-24.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
@@ -81,7 +81,7 @@ jobs:
 
   create-release:
     needs: build-and-release
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
@@ -92,7 +92,10 @@ jobs:
         run: |
           echo "## FocusTap ${{ github.ref_name }}" > release-notes.md
           echo "" >> release-notes.md
-          echo "See the [changelog](CHANGELOG.md) for details." >> release-notes.md
+          echo "Release ${{ github.ref_name }} of FocusTap." >> release-notes.md
+          echo "" >> release-notes.md
+          echo "### What's Changed" >> release-notes.md
+          echo '${{ github.event.release.body }}' >> release-notes.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
