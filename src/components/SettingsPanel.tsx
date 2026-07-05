@@ -195,6 +195,7 @@ const KEYBINDING_LABELS: Record<string, string> = {
 };
 
 function formatBinding(binding: string): string {
+  if (!binding) return "\u2014";
   const parts = binding.split("+").map((p) => {
     if (p === "ctrl") return "Ctrl";
     if (p === "shift") return "Shift";
@@ -226,6 +227,7 @@ function KeybindingsTab() {
   useEffect(() => {
     if (!recording) return;
     const handler = (e: KeyboardEvent) => {
+      if (e.repeat) return;
       e.preventDefault();
       e.stopPropagation();
       const parts: string[] = [];
@@ -278,6 +280,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const [tab, setTab] = useState<Tab>("general");
   const [autoStart, setAutoStart] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const keybindings = useTaskStore((s) => s.keybindings);
 
   useEffect(() => {
     if (open) {
@@ -393,7 +396,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                   </div>
                 </div>
                 <span className="text-xs font-mono bg-white/5 text-text-secondary px-2 py-1 rounded-md border border-border-subtle">
-                  Ctrl+Shift+Space
+                  {formatBinding(keybindings.toggleWindow || "ctrl+shift+space")}
                 </span>
               </div>
             </>

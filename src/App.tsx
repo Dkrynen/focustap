@@ -16,9 +16,10 @@ import { useTaskStore } from "./store";
 import { initAnalytics } from "./lib/analytics";
 import { ListChecks, BarChart3, Calendar, BrainCircuit, Edit3, Settings, Clock, Download, FileText, Table } from "lucide-react";
 import { exportToCSVFile, exportToMarkdownFile } from "./lib/export";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 function App() {
-  const { tasks, loading, newTaskId, loadTasks, updateText, remove, streak, isPro, onboardingDone, setOnboardingDone } = useTaskStore();
+  const { tasks, loading, newTaskId, loadTasks, updateText, remove, streak, isPro, onboardingDone, setOnboardingDone, loadKeybindings } = useTaskStore();
   const [mounted, setMounted] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -39,9 +40,10 @@ function App() {
 
   useEffect(() => {
     loadTasks();
+    loadKeybindings();
     initAnalytics();
     requestAnimationFrame(() => setMounted(true));
-  }, [loadTasks]);
+  }, [loadTasks, loadKeybindings]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -60,6 +62,13 @@ function App() {
         if (exportOpenRef.current) { setExportOpen(false); return; }
         if (shortcutOverlayOpenRef.current) { setShortcutOverlayOpen(false); return; }
         if (settingsOpenRef.current) { setSettingsOpen(false); return; }
+      }
+
+      // Toggle window (minimize/restore)
+      if (keybindings.toggleWindow && pressedBinding === keybindings.toggleWindow) {
+        e.preventDefault();
+        getCurrentWindow().hide();
+        return;
       }
 
       // Arrow navigation (only when no panel is open and not in input)
