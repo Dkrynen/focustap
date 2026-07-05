@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { X, Monitor, Volume2, Keyboard, KeyRound, RefreshCw, Shield, Loader2 } from "lucide-react";
 import { isEnabled, enable, disable } from "@tauri-apps/plugin-autostart";
+import { check as checkUpdate } from "@tauri-apps/plugin-updater";
+import { getVersion } from "@tauri-apps/api/app";
 import { useTaskStore } from "../store";
 import { playChime } from "../lib/sounds";
 import { LicenseActivation } from "./LicenseActivation";
@@ -45,17 +47,14 @@ function UpdatesTab() {
   const [currentVersion, setCurrentVersion] = useState("0.1.0");
 
   useEffect(() => {
-    import("@tauri-apps/api/app").then(({ getVersion }) =>
-      getVersion().then(setCurrentVersion).catch(() => {})
-    );
+    getVersion().then(setCurrentVersion).catch(() => {});
   }, []);
 
   const handleCheck = async () => {
     setChecking(true);
     setStatus("idle");
     try {
-      const { check } = await import("@tauri-apps/plugin-updater");
-      const update = await check();
+      const update = await checkUpdate();
       if (update) {
         setStatus("available");
         setVersion(update.version ?? "");
@@ -71,8 +70,7 @@ function UpdatesTab() {
 
   const handleInstall = async () => {
     try {
-      const { check } = await import("@tauri-apps/plugin-updater");
-      const update = await check();
+      const update = await checkUpdate();
       if (update) {
         await update.downloadAndInstall();
       }

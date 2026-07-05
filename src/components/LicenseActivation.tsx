@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, XCircle, Loader2, KeyRound } from "lucide-react";
+import { activateAndGetState, deactivate } from "@licenseseat/tauri-plugin";
 
 type LicenseStatus = "none" | "active" | "error" | "loading";
 
@@ -17,7 +18,6 @@ export function LicenseActivation() {
     setErrorMsg("");
 
     try {
-      const { activateAndGetState } = await import("@licenseseat/tauri-plugin");
       const state = await activateAndGetState(trimmed);
       if (state.isValid && state.isActivated) {
         setStatus("active");
@@ -34,10 +34,9 @@ export function LicenseActivation() {
 
   const handleDeactivate = async () => {
     try {
-      const { deactivate } = await import("@licenseseat/tauri-plugin");
       await deactivate();
-    } catch {
-      // Best-effort
+    } catch (e) {
+      console.error("License deactivation failed:", e);
     }
     setStatus("none");
     setKeyInput("");
