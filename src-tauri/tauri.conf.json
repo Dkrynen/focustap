@@ -25,15 +25,15 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: data:; font-src 'self'; connect-src 'self'"
     }
   },
   "plugins": {
     "updater": {
       "active": true,
       "dialog": false,
-      "endpoints": ["https://api.github.com/repos/YOUR_USERNAME/focustap/releases/latest"],
-      "pubkey": "YOUR_PUBLIC_KEY_HERE"
+      "endpoints": ["https://api.github.com/repos/Dkrynen/focustap/releases/latest"],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY5RTUxNDQ0OEFEREUwRTIKUldUaTROMktSQlRsK1poZG1lQm9MWU1kdXpkN09NM3lVMDJEaXZXNFg5QWE4aGJWYkw4QTVvay8K"
     }
   },
   "bundle": {

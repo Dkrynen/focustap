@@ -110,10 +110,10 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 
       <div
         className="absolute right-0 top-0 h-full w-[340px] max-w-[90vw] glass-elevated
-                     rounded-l-[14px] shadow-2xl flex flex-col"
+                     rounded-l-[14px] shadow-2xl flex flex-col
+                     transition-transform duration-200 ease-out-expo"
         style={{
           transform: showContent ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
         {/* Header */}
@@ -171,15 +171,15 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
                   <div
                     key={dateStr}
                     onClick={() => setSelectedDay(dateStr)}
-                    className={`bg-surface-primary min-h-[60px] p-1 cursor-pointer transition-colors
+                    className={`bg-surface-primary min-h-[76px] p-1.5 cursor-pointer transition-colors
                       ${isToday ? "ring-1 ring-accent-primary/30" : ""}
                       ${selectedDay === dateStr ? "bg-accent-primary/10" : "hover:bg-surface-glass"}`}
                   >
                     <span className={`text-[10px] ${isToday ? "text-accent-primary font-medium" : "text-text-tertiary"}`}>
                       {d.getDate()}
                     </span>
-                    <div className="mt-0.5 space-y-[1px]">
-                      {dayTasks.slice(0, 3).map((t) => (
+                    <div className="mt-1 space-y-[2px]">
+                      {dayTasks.slice(0, 4).map((t) => (
                         <div key={t.id} className="flex items-center gap-0.5">
                           <span className={`w-1 h-1 rounded-full flex-shrink-0 ${t.is_done ? "bg-status-success" : "bg-accent-primary"}`} />
                           <span className={`text-[8px] truncate ${t.is_done ? "text-text-tertiary line-through" : "text-text-secondary"}`}>

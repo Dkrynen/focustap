@@ -92,10 +92,10 @@ export function NotesPanel() {
       {/* Slide-in panel */}
       <div
         className="absolute right-0 top-0 h-full w-[320px] max-w-[90vw] glass-elevated
-                     rounded-l-[14px] shadow-2xl flex flex-col"
+                     rounded-l-[14px] shadow-2xl flex flex-col
+                     transition-transform duration-200 ease-out-expo"
         style={{
           transform: showContent ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
         {/* Header */}
@@ -122,33 +122,35 @@ export function NotesPanel() {
           </button>
         </div>
 
-        <div className="flex gap-3 flex-1 min-h-0 px-5 pb-4">
-          {/* Note list sidebar */}
-          <div className={`${editingId !== null ? "w-1/3" : "w-full"} overflow-y-auto space-y-1`}>
-            {notes.length === 0 && (
-              <p className="text-[11px] text-text-tertiary/60 italic pt-2">No notes yet</p>
-            )}
-            {notes.map((note) => (
-              <button
-                key={note.id}
-                onClick={() => { if (dirty) saveNote(); openNote(note); }}
-                className={`w-full text-left px-2.5 py-2 rounded-[6px] transition-colors cursor-pointer
-                  ${editingId === note.id ? "bg-accent-primary/15" : "bg-surface-glass hover:bg-surface-elevated"}`}
-              >
-                <div className="text-xs text-text-primary truncate font-medium">
-                  {note.title || "Untitled"}
-                </div>
-                <div className="text-[10px] text-text-tertiary truncate mt-0.5">
-                  {note.content ? note.content.slice(0, 40) + (note.content.length > 40 ? "…" : "") : "Empty note"}
-                </div>
-                <div className="text-[9px] text-text-quaternary mt-0.5">
-                  {note.updated_at.slice(0, 10)}
-                </div>
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-col flex-1 min-h-0 px-5 pb-4">
+          {/* Note list (shown when no note is being edited) */}
+          {editingId === null && (
+            <div className="overflow-y-auto space-y-1">
+              {notes.length === 0 && (
+                <p className="text-[11px] text-text-tertiary/60 italic pt-2">No notes yet</p>
+              )}
+              {notes.map((note) => (
+                <button
+                  key={note.id}
+                  onClick={() => { if (dirty) saveNote(); openNote(note); }}
+                  className={`w-full text-left px-2.5 py-2 rounded-[6px] transition-colors cursor-pointer
+                    ${editingId === note.id ? "bg-accent-primary/15" : "bg-surface-glass hover:bg-surface-elevated"}`}
+                >
+                  <div className="text-xs text-text-primary truncate font-medium">
+                    {note.title || "Untitled"}
+                  </div>
+                  <div className="text-[10px] text-text-tertiary truncate mt-0.5">
+                    {note.content ? note.content.slice(0, 40) + (note.content.length > 40 ? "…" : "") : "Empty note"}
+                  </div>
+                  <div className="text-[9px] text-text-quaternary mt-0.5">
+                    {note.updated_at.slice(0, 10)}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
 
-          {/* Note editor */}
+          {/* Note editor (full width) */}
           {editingId !== null && (
             <div className="flex-1 flex flex-col min-w-0">
               {/* Note title */}

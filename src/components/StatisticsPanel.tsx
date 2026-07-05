@@ -112,10 +112,10 @@ export function StatisticsPanel({ open, onClose }: StatisticsPanelProps) {
       {/* Slide-in panel */}
       <div
         className="absolute right-0 top-0 h-full w-[320px] max-w-[90vw] glass-elevated
-                     rounded-l-[14px] shadow-2xl flex flex-col"
+                     rounded-l-[14px] shadow-2xl flex flex-col
+                     transition-transform duration-200 ease-out-expo"
         style={{
           transform: showContent ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
         {/* Header */}

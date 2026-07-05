@@ -16,6 +16,7 @@ export function PomodoroTimer() {
     pomodoroPhase,
     pomodoroTimeRemaining,
     pomodoroWorkDuration,
+    pomodoroBreakDuration,
     pomodoroActiveTaskId,
     pomodoroStart,
     pomodoroPause,
@@ -42,7 +43,7 @@ export function PomodoroTimer() {
   const isRunning = pomodoroPhase !== "idle";
   const progress = pomodoroPhase === "idle"
     ? 1
-    : pomodoroTimeRemaining / (pomodoroPhase === "work" ? pomodoroWorkDuration : 300);
+    : pomodoroTimeRemaining / (pomodoroPhase === "work" ? pomodoroWorkDuration : pomodoroBreakDuration);
   const dashOffset = CIRCUMFERENCE * (1 - progress);
   const label = pomodoroPhase === "work" ? "Focus" : pomodoroPhase === "break" ? "Break" : "Timer";
 
