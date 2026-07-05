@@ -1,3 +1,5 @@
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
 import type { Task } from "./db";
 import { listAllTasks } from "./db";
 
@@ -63,26 +65,25 @@ export function tasksToMarkdown(tasks: Task[]): string {
   return lines.join("\n");
 }
 
+async function saveTextFile(content: string, defaultName: string, filters: { name: string; extensions: string[] }[]): Promise<void> {
+  const path = await save({
+    defaultPath: defaultName,
+    filters,
+  });
+  if (!path) return; // user cancelled
+  await writeTextFile(path, content);
+}
+
 export async function exportToCSVFile(): Promise<void> {
   const tasks = await listAllTasks();
   const csv = tasksToCSV(tasks);
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `focustap-${new Date().toLocaleDateString("en-CA")}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const date = new Date().toLocaleDateString("en-CA");
+  await saveTextFile(csv, `focustap-${date}.csv`, [{ name: "CSV", extensions: ["csv"] }]);
 }
 
 export async function exportToMarkdownFile(): Promise<void> {
   const tasks = await listAllTasks();
   const md = tasksToMarkdown(tasks);
-  const blob = new Blob([md], { type: "text/markdown;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `focustap-${new Date().toLocaleDateString("en-CA")}.md`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const date = new Date().toLocaleDateString("en-CA");
+  await saveTextFile(md, `focustap-${date}.md`, [{ name: "Markdown", extensions: ["md"] }]);
 }
