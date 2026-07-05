@@ -26,6 +26,7 @@ import {
 import { playChime } from "./lib/sounds";
 import { showToast } from "./components/Toast";
 import { trackEvent } from "./lib/analytics";
+import { bootstrapState, activateAndGetState, deactivate as deactivateLicensePlugin } from "@licenseseat/tauri-plugin";
 
 type PomodoroPhase = "idle" | "work" | "break";
 
@@ -190,6 +191,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }));
     } catch (e) {
       console.error("Failed to update task", e);
+      showToast("Could not update task");
     }
   },
 
@@ -236,6 +238,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       trackEvent("task_deleted");
     } catch (e) {
       console.error("Failed to delete task", e);
+      showToast("Could not delete task");
     }
   },
 
@@ -247,6 +250,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }));
     } catch (e) {
       console.error("Failed to set priority", e);
+      showToast("Could not set priority");
     }
   },
 
@@ -258,6 +262,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }));
     } catch (e) {
       console.error("Failed to set tags", e);
+      showToast("Could not set tags");
     }
   },
 
@@ -267,6 +272,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       await get().loadTasks();
     } catch (e) {
       console.error("Failed to move task", e);
+      showToast("Could not reorder task");
     }
   },
 
@@ -294,6 +300,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }));
     } catch (e) {
       console.error("Failed to update notes", e);
+      showToast("Could not save notes");
     }
   },
 
@@ -326,6 +333,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }));
     } catch (e) {
       console.error("Failed to create subtask", e);
+      showToast("Could not create subtask");
     }
   },
 
@@ -385,6 +393,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       set({ notes });
     } catch (e) {
       console.error("Failed to create note", e);
+      showToast("Could not create note");
     }
   },
 
@@ -396,6 +405,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }));
     } catch (e) {
       console.error("Failed to update note title", e);
+      showToast("Could not update note title");
     }
   },
 
@@ -407,6 +417,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }));
     } catch (e) {
       console.error("Failed to update note content", e);
+      showToast("Could not save note");
     }
   },
 
@@ -418,6 +429,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }));
     } catch (e) {
       console.error("Failed to delete note", e);
+      showToast("Could not delete note");
     }
   },
 
@@ -490,7 +502,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   /* License */
   checkLicense: async () => {
     try {
-      const { bootstrapState } = await import("@licenseseat/tauri-plugin");
       const state = await bootstrapState();
       set({ isPro: state.isValid && state.isActivated, licenseState: state.isValid ? "active" : "none" });
     } catch {
@@ -500,7 +511,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   activateLicense: async (key) => {
     try {
-      const { activateAndGetState } = await import("@licenseseat/tauri-plugin");
       const state = await activateAndGetState(key);
       const active = state.isValid && state.isActivated;
       set({ isPro: active, licenseState: active ? "active" : "none" });
@@ -517,10 +527,10 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   deactivateLicense: async () => {
     try {
-      const { deactivate } = await import("@licenseseat/tauri-plugin");
-      await deactivate();
-    } catch {
-      // Best-effort
+      await deactivateLicensePlugin();
+    } catch (e) {
+      console.error("License deactivation failed:", e);
+      showToast("Could not deactivate license");
     }
     set({ isPro: false, licenseState: "none" });
   },
