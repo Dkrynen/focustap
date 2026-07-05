@@ -36,6 +36,8 @@ export const TaskList = memo(function TaskList({ tasks, onUpdateText, onDelete, 
   const updateNotes = useTaskStore((s) => s.updateNotes);
   const toggle = useTaskStore((s) => s.toggle);
   const searchQuery = useTaskStore((s) => s.searchQuery);
+  const activeTaskIndex = useTaskStore((s) => s.activeTaskIndex);
+  const listRef = useRef<HTMLDivElement>(null);
 
   // Scroll to new task
   useEffect(() => {
@@ -44,6 +46,15 @@ export const TaskList = memo(function TaskList({ tasks, onUpdateText, onDelete, 
       el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
   }, [focusId]);
+
+  // Scroll focused task into view
+  useEffect(() => {
+    if (activeTaskIndex >= 0 && listRef.current) {
+      const rows = listRef.current.querySelectorAll("[data-task-id]");
+      const target = rows[activeTaskIndex] as HTMLElement | undefined;
+      target?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [activeTaskIndex]);
 
   const filteredTasks = searchQuery
     ? tasks.filter((t) =>
@@ -92,13 +103,15 @@ export const TaskList = memo(function TaskList({ tasks, onUpdateText, onDelete, 
           const isExpanded = expandedId === task.id;
           const tags = task.tags ? task.tags.split(",").filter(Boolean) : [];
 
+          const isFocused = filteredTasks.indexOf(task) === activeTaskIndex;
           return (
             <div key={task.id} data-task-id={task.id}>
               {/* Main task row */}
               <div
                 className={`flex items-center gap-2 px-3 py-2 rounded-[6px] transition-colors cursor-pointer
                   ${task.is_done ? "opacity-40" : "hover:bg-[rgba(255,255,255,0.04)]"}
-                  ${isExpanded ? "bg-[rgba(255,255,255,0.06)] rounded-b-none" : ""}`}
+                  ${isExpanded ? "bg-[rgba(255,255,255,0.06)] rounded-b-none" : ""}
+                  ${isFocused && !isExpanded ? "ring-1 ring-[#8b7eff]/40 bg-[rgba(139,126,255,0.06)]" : ""}`}
                 onClick={() => {
                   setExpandedId(isExpanded ? null : task.id);
                 }}

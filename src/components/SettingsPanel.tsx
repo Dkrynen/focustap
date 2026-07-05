@@ -18,7 +18,7 @@ interface ToggleProps {
   label: string;
 }
 
-type Tab = "general" | "license" | "updates" | "privacy";
+type Tab = "general" | "license" | "updates" | "privacy" | "keybindings";
 
 function Toggle({ checked, onChange, label }: ToggleProps) {
   return (
@@ -182,6 +182,98 @@ function PrivacyTab() {
   );
 }
 
+const KEYBINDING_LABELS: Record<string, string> = {
+  focusTaskInput: "Focus task input",
+  search: "Search tasks",
+  toggleWindow: "Toggle window",
+  togglePomodoro: "Toggle pomodoro",
+  arrowUp: "Navigate up",
+  arrowDown: "Navigate down",
+  editTask: "Edit task",
+  deleteTask: "Delete task",
+  openShortcuts: "Shortcuts overlay",
+};
+
+function formatBinding(binding: string): string {
+  const parts = binding.split("+").map((p) => {
+    if (p === "ctrl") return "Ctrl";
+    if (p === "shift") return "Shift";
+    if (p === "meta") return "Cmd";
+    if (p === "arrowup") return "\u2191";
+    if (p === "arrowdown") return "\u2193";
+    if (p === "arrowleft") return "\u2190";
+    if (p === "arrowright") return "\u2192";
+    if (p === "delete") return "Del";
+    if (p === "backspace") return "Bksp";
+    if (p === "escape") return "Esc";
+    if (p === " ") return "Space";
+    if (p.length === 1) return p.toUpperCase();
+    return p.charAt(0).toUpperCase() + p.slice(1);
+  });
+  return parts.join(" + ");
+}
+
+function KeybindingsTab() {
+  const keybindings = useTaskStore((s) => s.keybindings);
+  const loadKeybindings = useTaskStore((s) => s.loadKeybindings);
+  const setKeybinding = useTaskStore((s) => s.setKeybinding);
+  const [recording, setRecording] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadKeybindings();
+  }, [loadKeybindings]);
+
+  useEffect(() => {
+    if (!recording) return;
+    const handler = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const parts: string[] = [];
+      if (e.ctrlKey || e.metaKey) parts.push("ctrl");
+      if (e.shiftKey && e.key !== "Shift") parts.push("shift");
+      const key = e.key.toLowerCase();
+      if (!["control", "shift", "meta", "alt"].includes(key)) {
+        parts.push(key);
+        const binding = parts.join("+");
+        setKeybinding(recording, binding);
+        setRecording(null);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [recording, setKeybinding]);
+
+  return (
+    <div className="space-y-3">
+      {Object.entries(KEYBINDING_LABELS).map(([action, label]) => {
+        const binding = keybindings[action] || "";
+        const isRecording = recording === action;
+        return (
+          <div key={action} className="flex items-center justify-between gap-3">
+            <p className="text-sm text-text-primary flex-1 truncate">{label}</p>
+            <button
+              onClick={() => {
+                if (isRecording) {
+                  setRecording(null);
+                } else {
+                  setRecording(action);
+                }
+              }}
+              className={`relative text-xs font-mono px-2 py-1 rounded-md border transition-colors cursor-pointer min-w-[80px] text-center ${
+                isRecording
+                  ? "border-accent-primary bg-accent-primary/10 text-accent-primary animate-pulse"
+                  : "border-border-subtle bg-white/5 text-text-secondary hover:border-accent-primary/40"
+              }`}
+            >
+              {isRecording ? "\u25CF  Press key..." : formatBinding(binding)}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const [tab, setTab] = useState<Tab>("general");
   const [autoStart, setAutoStart] = useState(false);
@@ -221,6 +313,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "general", label: "General", icon: <Monitor size={13} /> },
+    { id: "keybindings", label: "Keys", icon: <Keyboard size={13} /> },
     { id: "license", label: "License", icon: <KeyRound size={13} /> },
     { id: "updates", label: "Updates", icon: <RefreshCw size={13} /> },
     { id: "privacy", label: "Privacy", icon: <Shield size={13} /> },
@@ -305,6 +398,8 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
               </div>
             </>
           )}
+
+          {tab === "keybindings" && <KeybindingsTab />}
 
           {tab === "license" && <LicenseActivation />}
 

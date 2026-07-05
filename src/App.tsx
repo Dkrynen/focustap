@@ -45,25 +45,73 @@ function App() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      const { tasks, activeTaskIndex, setActiveTaskIndex, setSelectedTaskId, remove, keybindings } = useTaskStore.getState();
+      const key = e.key.toLowerCase();
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      // Build pressed binding string for modifier-aware comparison
+      const pressedParts: string[] = [];
+      if (ctrl) pressedParts.push("ctrl");
+      if (e.shiftKey && key !== "shift") pressedParts.push("shift");
+      if (!["control", "shift", "meta", "alt"].includes(key)) pressedParts.push(key);
+      const pressedBinding = pressedParts.join("+");
+
+      if (key === "escape") {
         if (exportOpenRef.current) { setExportOpen(false); return; }
         if (shortcutOverlayOpenRef.current) { setShortcutOverlayOpen(false); return; }
         if (settingsOpenRef.current) { setSettingsOpen(false); return; }
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+
+      // Arrow navigation (only when no panel is open and not in input)
+      if ((key === "arrowup" || key === "arrowdown") && !settingsOpenRef.current && !exportOpenRef.current) {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+        e.preventDefault();
+        if (tasks.length === 0) return;
+        const maxIdx = tasks.length - 1;
+        if (key === "arrowup") {
+          setActiveTaskIndex(activeTaskIndex <= 0 ? maxIdx : activeTaskIndex - 1);
+        } else {
+          setActiveTaskIndex(activeTaskIndex >= maxIdx ? 0 : activeTaskIndex + 1);
+        }
+        return;
+      }
+
+      if (keybindings.editTask && pressedBinding === keybindings.editTask && activeTaskIndex >= 0 && activeTaskIndex < tasks.length) {
+        e.preventDefault();
+        setSelectedTaskId(tasks[activeTaskIndex].id);
+        return;
+      }
+
+      if ((keybindings.deleteTask && pressedBinding === keybindings.deleteTask) && activeTaskIndex >= 0 && activeTaskIndex < tasks.length) {
+        e.preventDefault();
+        const id = tasks[activeTaskIndex].id;
+        remove(id);
+        setActiveTaskIndex(Math.min(activeTaskIndex, tasks.length - 2));
+        return;
+      }
+
+      if (keybindings.search && pressedBinding === keybindings.search) {
         e.preventDefault();
         searchRef.current?.focus();
+        return;
       }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "P") {
+
+      if (keybindings.togglePomodoro && pressedBinding === keybindings.togglePomodoro) {
         e.preventDefault();
         useTaskStore.getState().pomodoroStart();
+        return;
       }
-      if (e.key === "?") {
+
+      if (keybindings.openShortcuts && pressedBinding === keybindings.openShortcuts) {
         e.preventDefault();
         setShortcutOverlayOpen(true);
+        return;
       }
-      if (e.key === "n" && !e.metaKey && !e.ctrlKey) {
+
+      if (keybindings.focusTaskInput && pressedBinding === keybindings.focusTaskInput) {
         document.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
+        return;
       }
     };
     window.addEventListener("keydown", handler);

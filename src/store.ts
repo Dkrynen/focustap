@@ -27,6 +27,7 @@ import { playChime } from "./lib/sounds";
 import { showToast } from "./components/Toast";
 import { trackEvent } from "./lib/analytics";
 import { bootstrapState, activateAndGetState, deactivate as deactivateLicensePlugin } from "@licenseseat/tauri-plugin";
+import { load } from "@tauri-apps/plugin-store";
 
 type PomodoroPhase = "idle" | "work" | "break";
 
@@ -91,6 +92,11 @@ interface TaskState {
   /* Onboarding */
   onboardingDone: boolean;
   setOnboardingDone: () => void;
+
+  /* Keybindings */
+  keybindings: Record<string, string>;
+  loadKeybindings: () => Promise<void>;
+  setKeybinding: (action: string, binding: string) => Promise<void>;
 }
 
 export const useTaskStore = create<TaskState>((set, get) => ({
@@ -116,6 +122,43 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   licenseState: "unknown",
 
   onboardingDone: false,
+
+  keybindings: {
+    focusTaskInput: "n",
+    search: "ctrl+f",
+    toggleWindow: "ctrl+shift+space",
+    togglePomodoro: "ctrl+shift+p",
+    arrowUp: "arrowup",
+    arrowDown: "arrowdown",
+    editTask: "e",
+    deleteTask: "delete",
+    openShortcuts: "?",
+  },
+
+  loadKeybindings: async () => {
+    try {
+      const store = await load("keybindings.json");
+      const saved = await store.get<Record<string, string>>("bindings");
+      if (saved) {
+        set((s) => ({ keybindings: { ...s.keybindings, ...saved } }));
+      }
+    } catch {
+      // defaults are fine
+    }
+  },
+
+  setKeybinding: async (action, binding) => {
+    set((s) => ({ keybindings: { ...s.keybindings, [action]: binding } }));
+    try {
+      const store = await load("keybindings.json");
+      const saved = (await store.get<Record<string, string>>("bindings")) || {};
+      saved[action] = binding;
+      await store.set("bindings", saved);
+      await store.save();
+    } catch {
+      // silently fail persistence
+    }
+  },
 
   loadTasks: async () => {
     set({ loading: true });
