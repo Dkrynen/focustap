@@ -100,7 +100,7 @@ export const TaskList = memo(function TaskList({ tasks, onUpdateText, onDelete, 
                   ${task.is_done ? "opacity-40" : "hover:bg-[rgba(255,255,255,0.04)]"}
                   ${isExpanded ? "bg-[rgba(255,255,255,0.06)] rounded-b-none" : ""}`}
                 onClick={() => {
-                  if (!isExpanded) toggle(task.id);
+                  setExpandedId(isExpanded ? null : task.id);
                 }}
               >
                 {/* Checkbox */}
@@ -135,7 +135,7 @@ export const TaskList = memo(function TaskList({ tasks, onUpdateText, onDelete, 
                 {!task.is_done && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setExpandedId(isExpanded ? null : task.id); }}
-                    className="flex-shrink-0 opacity-0 hover:opacity-100 text-[#666] hover:text-[#8b7eff] transition-all cursor-pointer"
+                    className="flex-shrink-0 text-[#555] hover:text-[#8b7eff] transition-colors cursor-pointer"
                     title="Edit task"
                   >
                     <Pencil size={12} />
@@ -145,7 +145,7 @@ export const TaskList = memo(function TaskList({ tasks, onUpdateText, onDelete, 
                 {/* Delete button */}
                 <button
                   onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
-                  className="flex-shrink-0 opacity-0 hover:opacity-100 text-[#666] hover:text-[#ef4444] transition-all cursor-pointer"
+                  className="flex-shrink-0 text-[#555] hover:text-[#ef4444] transition-colors cursor-pointer"
                   title="Delete task"
                 >
                   <Trash2 size={13} />

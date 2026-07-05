@@ -59,7 +59,7 @@ export function TaskInput() {
           }
         }}
         placeholder="Add a task... (!h !m !l for priority, #tag)"
-        className="w-full bg-[rgba(255,255,255,0.04)] text-[#f0f0f0] text-[13px] px-3 py-2 rounded-[6px] outline-none border border-[rgba(255,255,255,0.06)] focus:border-[#8b7eff] focus:bg-[rgba(255,255,255,0.06)] transition-colors placeholder-[#555]"
+        className="w-full bg-surface-glass text-text-primary placeholder-text-tertiary/50 text-xs px-4 py-2.5 rounded-[10px] outline-none border border-border-default focus:border-accent-primary/30 focus:shadow-[0_0_0_1px_rgba(139,126,255,0.15)] transition-all duration-150 placeholder-[#555]"
         autoFocus
       />
     </div>

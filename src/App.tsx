@@ -58,6 +58,10 @@ function App() {
         e.preventDefault();
         useTaskStore.getState().pomodoroStart();
       }
+      if (e.key === "?") {
+        e.preventDefault();
+        setShortcutOverlayOpen(true);
+      }
       if (e.key === "n" && !e.metaKey && !e.ctrlKey) {
         document.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
       }
