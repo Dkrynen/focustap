@@ -27,7 +27,15 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutOverlayOpen, setShortcutOverlayOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const exportOpenRef = useRef(false);
+  const shortcutOverlayOpenRef = useRef(false);
+  const settingsOpenRef = useRef(false);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Keep refs in sync with state
+  useEffect(() => { exportOpenRef.current = exportOpen; }, [exportOpen]);
+  useEffect(() => { shortcutOverlayOpenRef.current = shortcutOverlayOpen; }, [shortcutOverlayOpen]);
+  useEffect(() => { settingsOpenRef.current = settingsOpen; }, [settingsOpen]);
 
   useEffect(() => {
     loadTasks();
@@ -38,9 +46,9 @@ function App() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (exportOpen) { setExportOpen(false); return; }
-        if (shortcutOverlayOpen) { setShortcutOverlayOpen(false); return; }
-        if (settingsOpen) { setSettingsOpen(false); return; }
+        if (exportOpenRef.current) { setExportOpen(false); return; }
+        if (shortcutOverlayOpenRef.current) { setShortcutOverlayOpen(false); return; }
+        if (settingsOpenRef.current) { setSettingsOpen(false); return; }
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "f") {
         e.preventDefault();
@@ -56,7 +64,7 @@ function App() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [exportOpen, shortcutOverlayOpen, settingsOpen]);
+  }, []);
 
   return (
     <div className={`h-full flex flex-col bg-[#0a0a0a] ${mounted ? "animate-fade-in" : "opacity-0"}`}>

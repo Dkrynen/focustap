@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { Check, Trash2, Inbox, Search, Pencil } from "lucide-react";
 import type { Task } from "../lib/db";
 import { useTaskStore } from "../store";
@@ -29,7 +29,7 @@ function PriorityDot({ priority }: { priority: number }) {
   );
 }
 
-export function TaskList({ tasks, onUpdateText, onDelete, focusId, streak }: TaskListProps) {
+export const TaskList = memo(function TaskList({ tasks, onUpdateText, onDelete, focusId, streak }: TaskListProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const setPriority = useTaskStore((s) => s.setPriority);
   const setTags = useTaskStore((s) => s.setTags);
@@ -169,7 +169,7 @@ export function TaskList({ tasks, onUpdateText, onDelete, focusId, streak }: Tas
       </div>
     </div>
   );
-}
+});
 
 /* ── Expandable detail row ── */
 
