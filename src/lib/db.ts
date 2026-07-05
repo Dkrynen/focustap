@@ -3,19 +3,26 @@ import Database from "@tauri-apps/plugin-sql";
 let db: Database | null = null;
 let dbPromise: Promise<Database> | null = null;
 
+const MAX_DB_RETRIES = 3;
+const DB_RETRY_DELAY_MS = 200;
+
 async function initDb(database: Database): Promise<Database> {
   try {
     await database.execute("PRAGMA journal_mode = WAL");
     await database.execute("PRAGMA synchronous = NORMAL");
     await database.execute("PRAGMA cache_size = -8192");
     await database.execute("PRAGMA busy_timeout = 5000");
-  } catch (_) { /* pragmas are best-effort */ }
+  } catch (e) {
+    console.warn("PRAGMA setup failed (non-fatal):", e);
+  }
 
   try {
     await database.execute(
       "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
     );
-  } catch (_) { /* settings table is optional */ }
+  } catch (e) {
+    console.warn("Settings table creation failed (non-fatal):", e);
+  }
 
   try {
     await database.execute("CREATE INDEX IF NOT EXISTS idx_tasks_created ON tasks(date(created_at))");
@@ -25,27 +32,44 @@ async function initDb(database: Database): Promise<Database> {
     await database.execute("CREATE INDEX IF NOT EXISTS idx_tasks_sort ON tasks(sort_order)");
     await database.execute("CREATE INDEX IF NOT EXISTS idx_notes_updated ON notes(updated_at)");
     await database.execute("CREATE INDEX IF NOT EXISTS idx_activity_log_ts ON activity_log(timestamp)");
-  } catch (_) { /* indexes are best-effort */ }
+  } catch (e) {
+    console.warn("Index creation failed (non-fatal):", e);
+  }
 
   return database;
+}
+
+/** Sleep helper for retry backoff */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function getDb(): Promise<Database> {
   if (db) return db;
   if (dbPromise) return dbPromise;
-  dbPromise = Database.load("sqlite:focustap.db")
-    .then(initDb)
-    .then((database) => {
-      db = database;
+
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_DB_RETRIES; attempt++) {
+    try {
+      dbPromise = Database.load("sqlite:focustap.db")
+        .then(initDb)
+        .then((database) => {
+          db = database;
+          dbPromise = null;
+          return database;
+        });
+      return await dbPromise;
+    } catch (e) {
+      lastError = e;
+      console.error(`getDb attempt ${attempt}/${MAX_DB_RETRIES} failed:`, e);
       dbPromise = null;
-      return database;
-    })
-    .catch((e) => {
-      console.error("getDb init failed, will retry:", e);
-      dbPromise = null;
-      throw e;
-    });
-  return dbPromise;
+      if (attempt < MAX_DB_RETRIES) {
+        await sleep(DB_RETRY_DELAY_MS * attempt);
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 export interface Task {
@@ -96,7 +120,11 @@ export async function createTask(
        $2, $3, $4)`,
     [text || '', priority || 0, tags || '', parentId ?? null]
   );
-  return result.lastInsertId ?? 0;
+  const id = result.lastInsertId;
+  if (id == null || id === 0) {
+    throw new Error("createTask failed: lastInsertId is missing or 0");
+  }
+  return id;
 }
 
 export async function updateTaskText(id: number, text: string): Promise<void> {
@@ -281,7 +309,11 @@ export async function createSubtask(parentId: number): Promise<number> {
     "INSERT INTO tasks (text, is_done, parent_id, sort_order) VALUES ('', 0, $1, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM tasks WHERE parent_id = $1))",
     [parentId]
   );
-  return result.lastInsertId ?? 0;
+  const id = result.lastInsertId;
+  if (id == null || id === 0) {
+    throw new Error("createSubtask failed: lastInsertId is missing or 0");
+  }
+  return id;
 }
 
 export async function listSubtasks(parentId: number): Promise<Task[]> {
@@ -389,7 +421,11 @@ export async function createPomodoroSession(
     "INSERT INTO pomodoro_sessions (task_id, duration_work, duration_break) VALUES ($1, $2, $3)",
     [taskId, durationWork, durationBreak]
   );
-  return result.lastInsertId ?? 0;
+  const id = result.lastInsertId;
+  if (id == null || id === 0) {
+    throw new Error("createPomodoroSession failed: lastInsertId is missing or 0");
+  }
+  return id;
 }
 
 export async function completePomodoroSession(
@@ -511,7 +547,11 @@ export async function createNote(): Promise<number> {
   const result = await database.execute(
     "INSERT INTO notes (title, content) VALUES ('', '')"
   );
-  return result.lastInsertId ?? 0;
+  const id = result.lastInsertId;
+  if (id == null || id === 0) {
+    throw new Error("createNote failed: lastInsertId is missing or 0");
+  }
+  return id;
 }
 
 export async function updateNoteTitle(id: number, title: string): Promise<void> {
@@ -550,7 +590,11 @@ export async function createTimeBlock(label: string, startTime: string, endTime:
     "INSERT INTO time_blocks (label, start_time, end_time, color, sort_order) VALUES ($1, $2, $3, $4, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM time_blocks))",
     [label, startTime, endTime, color]
   );
-  return result.lastInsertId ?? 0;
+  const id = result.lastInsertId;
+  if (id == null || id === 0) {
+    throw new Error("createTimeBlock failed: lastInsertId is missing or 0");
+  }
+  return id;
 }
 
 export async function deleteTimeBlock(id: number): Promise<void> {
