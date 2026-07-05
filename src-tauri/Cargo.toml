@@ -1,8 +1,8 @@
 [package]
 name = "focustap"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "FocusTap — A distraction-free task manager for Windows, macOS, and Linux"
+authors = ["Dkrynen"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -28,4 +28,8 @@ tauri-plugin-autostart = "2"
 tauri-plugin-licenseseat = "0.5"
 tauri-plugin-updater = "2"
 tauri-plugin-store = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
