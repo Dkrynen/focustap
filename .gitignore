@@ -25,3 +25,5 @@ dist-ssr
 
 # Tauri updater signing keys (keep private key secret)
 .tauri/
+/focusTap.key
+/focusTap.key.pub
