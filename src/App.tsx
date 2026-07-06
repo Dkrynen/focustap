@@ -1,34 +1,27 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import {
-	BarChart3,
-	BrainCircuit,
-	Calendar,
-	Clock,
 	Download,
-	Edit3,
 	FileText,
-	ListChecks,
+	Search,
 	Settings,
 	Table,
-	Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthPage } from "./components/AuthPage";
 import { CalendarView } from "./components/CalendarView";
 import { DayPlanner } from "./components/DayPlanner";
-import { FocusAnalytics } from "./components/FocusAnalytics";
 import { NotesPanel } from "./components/NotesPanel";
 import { Onboarding } from "./components/Onboarding";
 import { PomodoroTimer } from "./components/PomodoroTimer";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { ShortcutOverlay } from "./components/ShortcutOverlay";
-import { StatisticsPanel } from "./components/StatisticsPanel";
+import { Sidebar, type View } from "./components/Sidebar";
 import { TaskDetail } from "./components/TaskDetail";
 import { TaskInput } from "./components/TaskInput";
 import { TaskList } from "./components/TaskList";
 import { TaskSearch } from "./components/TaskSearch";
-import { WorkspacePanel } from "./components/WorkspacePanel";
+
 import { initAnalytics } from "./lib/analytics";
 import { useAuthStore } from "./lib/auth-store";
 import { exportToCSVFile, exportToMarkdownFile } from "./lib/export";
@@ -53,24 +46,20 @@ function App() {
 		loadKeybindings,
 	} = useTaskStore();
 	const { user, initialized: authInitialized, checkSession } = useAuthStore();
-	const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
+	const { workspaces, activeWorkspaceId, setActiveWorkspace } =
+		useWorkspaceStore();
 	const [mounted, setMounted] = useState(false);
-	const [statsOpen, setStatsOpen] = useState(false);
-	const [calendarOpen, setCalendarOpen] = useState(false);
-	const [dayPlannerOpen, setDayPlannerOpen] = useState(false);
-	const [focusOpen, setFocusOpen] = useState(false);
+	const [activeView, setActiveView] = useState<View>("today");
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [shortcutOverlayOpen, setShortcutOverlayOpen] = useState(false);
-	const [workspaceOpen, setWorkspaceOpen] = useState(false);
 	const [exportOpen, setExportOpen] = useState(false);
+	const [searchOpen, setSearchOpen] = useState(false);
 	const exportOpenRef = useRef(false);
 	const shortcutOverlayOpenRef = useRef(false);
 	const settingsOpenRef = useRef(false);
 	const searchRef = useRef<HTMLInputElement>(null);
-	const [userMenuOpen, setUserMenuOpen] = useState(false);
-	const userMenuRef = useRef<HTMLDivElement>(null);
 
-	// Keep refs in sync with state
+	// Keep refs in sync
 	useEffect(() => {
 		exportOpenRef.current = exportOpen;
 	}, [exportOpen]);
@@ -80,20 +69,6 @@ function App() {
 	useEffect(() => {
 		settingsOpenRef.current = settingsOpen;
 	}, [settingsOpen]);
-
-	useEffect(() => {
-		const handler = (e: MouseEvent) => {
-			if (
-				userMenuOpen &&
-				userMenuRef.current &&
-				!userMenuRef.current.contains(e.target as Node)
-			) {
-				setUserMenuOpen(false);
-			}
-		};
-		document.addEventListener("mousedown", handler);
-		return () => document.removeEventListener("mousedown", handler);
-	}, [userMenuOpen]);
 
 	useEffect(() => {
 		checkSession();
@@ -125,7 +100,6 @@ function App() {
 
 	useEffect(() => {
 		const root = document.documentElement;
-		// Apply stored theme preset
 		const storedPreset = localStorage.getItem("focustap-theme-preset") as
 			| "midnight"
 			| "aurora"
@@ -143,7 +117,6 @@ function App() {
 			);
 			root.classList.add(`theme-${storedPreset}`);
 		}
-		// Apply stored theme mode
 		const stored = localStorage.getItem("focustap-theme") as
 			| "dark"
 			| "light"
@@ -181,7 +154,6 @@ function App() {
 			const key = e.key.toLowerCase();
 			const ctrl = e.ctrlKey || e.metaKey;
 
-			// Build pressed binding string for modifier-aware comparison
 			const pressedParts: string[] = [];
 			if (ctrl) pressedParts.push("ctrl");
 			if (e.shiftKey && key !== "shift") pressedParts.push("shift");
@@ -202,9 +174,12 @@ function App() {
 					setSettingsOpen(false);
 					return;
 				}
+				if (searchOpen) {
+					setSearchOpen(false);
+					return;
+				}
 			}
 
-			// Toggle window (minimize/restore)
 			if (
 				keybindings.toggleWindow &&
 				pressedBinding === keybindings.toggleWindow
@@ -214,7 +189,6 @@ function App() {
 				return;
 			}
 
-			// Arrow navigation (only when no panel is open and not in input)
 			if (
 				(key === "arrowup" || key === "arrowdown") &&
 				!settingsOpenRef.current &&
@@ -263,7 +237,8 @@ function App() {
 
 			if (keybindings.search && pressedBinding === keybindings.search) {
 				e.preventDefault();
-				searchRef.current?.focus();
+				setSearchOpen(true);
+				setTimeout(() => searchRef.current?.focus(), 50);
 				return;
 			}
 
@@ -295,7 +270,7 @@ function App() {
 		};
 		window.addEventListener("keydown", handler);
 		return () => window.removeEventListener("keydown", handler);
-	}, []);
+	}, [searchOpen]);
 
 	const requiresAuth = Boolean(import.meta.env.VITE_SUPABASE_URL);
 	const showAuthWall = requiresAuth && authInitialized && !user;
@@ -314,159 +289,159 @@ function App() {
 
 	return (
 		<div
-			className={`h-full flex flex-col bg-surface-primary ${mounted ? "animate-fade-in" : "opacity-0"}`}
+			className={`h-full flex bg-surface-primary ${mounted ? "animate-fade-in" : "opacity-0"}`}
 		>
-			{/* Header */}
-			<div className="flex items-center gap-2 px-5 pt-4 pb-3 select-none">
-				<ListChecks size={18} className="text-accent-primary" />
-				<span className="text-sm font-medium text-text-secondary">
-					{t("app.name")}
-				</span>
-				{streak > 0 && (
-					<span className="text-[11px] text-[#eab308]">{streak}🔥</span>
-				)}
-				{isPro && (
-					<span className="text-[10px] font-medium text-accent-primary ml-1">
-						{t("license.pro_badge")}
-					</span>
-				)}
+			{/* Sidebar */}
+			<Sidebar
+				activeView={activeView}
+				onViewChange={setActiveView}
+				workspaces={workspaces}
+				activeWorkspaceId={activeWorkspaceId}
+				onWorkspaceChange={setActiveWorkspace}
+			/>
 
-				{/* Toolbar */}
-				<div className="ml-auto flex items-center gap-1">
-					<button
-						type="button"
-						onClick={() => setStatsOpen(true)}
-						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
-						title={t("stats.title")}
-					>
-						<BarChart3 size={15} />
-					</button>
-					<button
-						type="button"
-						onClick={() => setCalendarOpen(true)}
-						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
-						title={t("calendar.today")}
-					>
-						<Calendar size={15} />
-					</button>
-					<button
-						type="button"
-						onClick={() => setDayPlannerOpen(true)}
-						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
-						title={t("day_planner.title")}
-					>
-						<Clock size={15} />
-					</button>
-					<button
-						type="button"
-						onClick={() => useTaskStore.getState().setNotesPanelOpen(true)}
-						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
-						title={t("notes.title")}
-					>
-						<Edit3 size={15} />
-					</button>
-					<button
-						type="button"
-						onClick={() => setFocusOpen(true)}
-						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
-						title={t("focus.title")}
-					>
-						<BrainCircuit size={15} />
-					</button>
-					<div className="relative">
-						<button
-							type="button"
-							onClick={() => setExportOpen(!exportOpen)}
-							className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
-							title={t("task.export.title")}
-						>
-							<Download size={15} />
-						</button>
-						{exportOpen && (
-							<div className="absolute right-0 top-full mt-1 w-[130px] bg-surface-deep border border-border-subtle rounded-[6px] shadow-xl z-50 overflow-hidden">
-								<button
-									type="button"
-									onClick={() => {
-										setExportOpen(false);
-										exportToMarkdownFile();
-									}}
-									className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-accent-subtle hover:text-text-primary transition-colors cursor-pointer"
-								>
-									<FileText size={12} /> {t("task.export.markdown")}
-								</button>
-								<button
-									type="button"
-									onClick={() => {
-										setExportOpen(false);
-										exportToCSVFile();
-									}}
-									className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-accent-subtle hover:text-text-primary transition-colors cursor-pointer"
-								>
-									<Table size={12} /> {t("task.export.csv")}
-								</button>
-							</div>
-						)}
-					</div>
-
-					{/* Workspace */}
-					{user && (
-						<button
-							type="button"
-							onClick={() => setWorkspaceOpen(true)}
-							className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
-							title={t("workspace.title")}
-						>
-							<Users size={15} />
-						</button>
+			{/* Main area */}
+			<div className="flex-1 flex flex-col min-w-0">
+				{/* Top bar */}
+				<div className="flex items-center gap-2 px-4 pt-3 pb-2 select-none">
+					{activeView === "today" || activeView === "inbox" ? (
+						<>
+							<span className="text-xs font-medium text-text-quaternary uppercase tracking-wider">
+								{activeView === "today" ? "Today" : "Inbox"}
+							</span>
+							{streak > 0 && (
+								<span className="text-[11px] text-[#eab308]">{streak}🔥</span>
+							)}
+							{isPro && (
+								<span className="text-[10px] font-medium text-accent-primary ml-auto">
+									{t("license.pro_badge")}
+								</span>
+							)}
+						</>
+					) : (
+						<span className="text-xs font-medium text-text-quaternary uppercase tracking-wider">
+							{activeView === "upcoming"
+								? t("day_planner.title")
+								: activeView === "notes"
+									? t("notes.title")
+									: "Calendar"}
+						</span>
 					)}
 
-					<button
-						type="button"
-						onClick={() => setSettingsOpen(true)}
-						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
-						title={t("settings.title")}
-					>
-						<Settings size={16} />
-					</button>
+					<div className="ml-auto flex items-center gap-1">
+						{/* Search toggle */}
+						<button
+							type="button"
+							onClick={() => setSearchOpen(!searchOpen)}
+							className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
+							title={t("common.search")}
+						>
+							<Search size={15} />
+						</button>
+
+						{/* Export */}
+						<div className="relative">
+							<button
+								type="button"
+								onClick={() => setExportOpen(!exportOpen)}
+								className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
+								title={t("task.export.title")}
+							>
+								<Download size={15} />
+							</button>
+							{exportOpen && (
+								<div className="absolute right-0 top-full mt-1 w-[130px] bg-surface-deep border border-border-subtle rounded-[10px] shadow-xl z-50 overflow-hidden">
+									<button
+										type="button"
+										onClick={() => {
+											setExportOpen(false);
+											exportToMarkdownFile();
+										}}
+										className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-accent-subtle hover:text-text-primary transition-colors cursor-pointer"
+									>
+										<FileText size={12} /> {t("task.export.markdown")}
+									</button>
+									<button
+										type="button"
+										onClick={() => {
+											setExportOpen(false);
+											exportToCSVFile();
+										}}
+										className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-accent-subtle hover:text-text-primary transition-colors cursor-pointer"
+									>
+										<Table size={12} /> {t("task.export.csv")}
+									</button>
+								</div>
+							)}
+						</div>
+
+						<button
+							type="button"
+							onClick={() => setSettingsOpen(true)}
+							className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
+							title={t("settings.title")}
+						>
+							<Settings size={16} />
+						</button>
+					</div>
+				</div>
+
+				{/* Search bar (expandable) */}
+				{searchOpen && (
+					<div className="px-4 pb-2">
+						<TaskSearch
+							inputRef={searchRef as React.RefObject<HTMLInputElement | null>}
+							onSearchActive={() => {}}
+						/>
+					</div>
+				)}
+
+				{/* Pomodoro timer — always visible */}
+				<div className="px-4 pb-2">
+					<PomodoroTimer />
+				</div>
+
+				{/* Active view */}
+				<div className="flex flex-col flex-1 px-4 pb-4 min-h-0 gap-2">
+					{(activeView === "today" || activeView === "inbox") && (
+						<>
+							{!searchOpen && <TaskInput />}
+							{loading && (
+								<div className="text-center py-6 text-text-quaternary text-xs">
+									{t("common.loading")}
+								</div>
+							)}
+							{!loading && (
+								<TaskList
+									tasks={tasks}
+									onUpdateText={updateText}
+									onDelete={remove}
+									focusId={newTaskId}
+									streak={streak}
+								/>
+							)}
+						</>
+					)}
 				</div>
 			</div>
 
-			{/* Pomodoro */}
-			<div className="px-5 pb-2">
-				<PomodoroTimer />
-			</div>
-
-			{/* Main */}
-			<div className="flex flex-col flex-1 px-5 pb-5 min-h-0 gap-2">
-				<TaskInput />
-				<TaskSearch
-					inputRef={searchRef as React.RefObject<HTMLInputElement | null>}
-					onSearchActive={() => {}}
-				/>
-
-				{loading && (
-					<div className="text-center py-6 text-text-quaternary text-xs">
-						{t("common.loading")}
-					</div>
-				)}
-
-				{!loading && (
-					<TaskList
-						tasks={tasks}
-						onUpdateText={updateText}
-						onDelete={remove}
-						focusId={newTaskId}
-						streak={streak}
-					/>
-				)}
-			</div>
+			{/* Panels (slide-ins) */}
+			{activeView === "upcoming" && (
+				<DayPlanner open onClose={() => setActiveView("today")} />
+			)}
+			{activeView === "notes" && (
+				<NotesPanel />
+			)}
+			{activeView === "calendar" && (
+				<CalendarView open onClose={() => setActiveView("today")} />
+			)}
 
 			{/* Onboarding */}
 			{!loading && !onboardingDone && !settingsOpen && (
 				<Onboarding onComplete={setOnboardingDone} />
 			)}
 
-			{/* Panels */}
+			{/* Settings — always slide-in */}
 			<SettingsPanel
 				open={settingsOpen}
 				onClose={() => setSettingsOpen(false)}
@@ -475,21 +450,6 @@ function App() {
 			<ShortcutOverlay
 				open={shortcutOverlayOpen}
 				onClose={() => setShortcutOverlayOpen(false)}
-			/>
-			<StatisticsPanel open={statsOpen} onClose={() => setStatsOpen(false)} />
-			<CalendarView
-				open={calendarOpen}
-				onClose={() => setCalendarOpen(false)}
-			/>
-			<FocusAnalytics open={focusOpen} onClose={() => setFocusOpen(false)} />
-			<NotesPanel />
-			<DayPlanner
-				open={dayPlannerOpen}
-				onClose={() => setDayPlannerOpen(false)}
-			/>
-			<WorkspacePanel
-				open={workspaceOpen}
-				onClose={() => setWorkspaceOpen(false)}
 			/>
 		</div>
 	);
