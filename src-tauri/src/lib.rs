@@ -38,6 +38,29 @@ fn toggle_window(window: &tauri::WebviewWindow) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let _sentry_guard = {
+        let dsn = std::env::var("SENTRY_DSN").ok();
+        if let Some(dsn) = dsn.filter(|d| !d.is_empty()) {
+            Some(sentry::init((
+                dsn,
+                sentry::ClientOptions {
+                    release: sentry::release_name!(),
+                    environment: Some(
+                        if cfg!(debug_assertions) {
+                            "development".into()
+                        } else {
+                            "production".into()
+                        },
+                    ),
+                    traces_sample_rate: if cfg!(debug_assertions) { 0.1 } else { 1.0 },
+                    ..Default::default()
+                },
+            )))
+        } else {
+            None
+        }
+    };
+
     let migrations = vec![
         Migration {
             version: 1,

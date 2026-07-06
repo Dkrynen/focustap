@@ -48,11 +48,14 @@ jobs:
         run: cargo check
         working-directory: src-tauri
 
+      - name: Lint (Biome)
+        run: npx biome check src/
+
       - name: Dependency audit (npm)
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high
 
       - name: Rust audit
-        run: cargo audit || echo "cargo-audit not installed — skipping"
+        run: cargo audit
         working-directory: src-tauri
         continue-on-error: true
 
@@ -65,5 +68,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Format check (Biome)
+        run: npx biome format --check src/
       - name: Type check
         run: npx tsc --noEmit
