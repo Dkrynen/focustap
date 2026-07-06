@@ -21,13 +21,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: ubuntu-24.04
+          - platform: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             bundle-targets: deb,AppImage
-          - platform: windows-2022
+          - platform: windows-latest
             target: x86_64-pc-windows-msvc
             bundle-targets: msi
-          - platform: macos-13
+          - platform: macos-latest
             target: aarch64-apple-darwin
             bundle-targets: dmg
 
@@ -48,19 +48,21 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-24.04'
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf
 
       - name: Install npm dependencies
         run: npm ci
 
       - name: Build and sign
-        uses: tauri-apps/tauri-action@v2
+        uses: tauri-apps/tauri-action@v1
         id: tauri-build
         with:
           args: --bundles ${{ matrix.bundle-targets }}
+          uploadUpdaterJson: true
+          uploadUpdaterSignatures: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -72,16 +74,9 @@ jobs:
             src-tauri/target/release/bundle/**/*
             !src-tauri/target/release/bundle/**/*.dbg
 
-      - name: Upload update manifest
-        if: matrix.platform == 'ubuntu-22.04'
-        uses: actions/upload-artifact@v4
-        with:
-          name: updater-manifest
-          path: src-tauri/target/release/bundle/**/*.json
-
   create-release:
     needs: build-and-release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
