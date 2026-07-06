@@ -4,6 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FocusTap</title>
+    <script>
+      (function(){
+        var theme = localStorage.getItem("focustap-theme");
+        var preset = localStorage.getItem("focustap-theme-preset");
+        var accent = localStorage.getItem("focustap-accent");
+        var root = document.documentElement;
+        if (preset) { root.classList.add("theme-" + preset); }
+        if (theme === "light") { root.classList.add("light"); }
+        else if (theme === "system" || !theme) {
+          if (window.matchMedia("(prefers-color-scheme: light)").matches) { root.classList.add("light"); }
+        }
+        if (accent) {
+          root.style.setProperty("--accent-primary", accent);
+          root.style.setProperty("--accent-hover", accent + "cc");
+          root.style.setProperty("--accent-subtle", accent + "26");
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet" />
