@@ -75,6 +75,7 @@ jobs:
             !src-tauri/target/release/bundle/**/*.dbg
 
   create-release:
+    if: always()
     needs: build-and-release
     runs-on: ubuntu-22.04
     permissions:
