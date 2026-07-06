@@ -1,6 +1,6 @@
 [package]
 name = "focustap"
-version = "0.1.0"
+version = "0.1.1"
 description = "FocusTap — A distraction-free task manager for Windows, macOS, and Linux"
 authors = ["Dkrynen"]
 edition = "2021"
