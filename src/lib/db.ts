@@ -26,6 +26,42 @@ async function initDb(database: Database): Promise<Database> {
 
 	try {
 		await database.execute(
+			`CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        text TEXT NOT NULL DEFAULT '',
+        is_done INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+        completed_at TEXT,
+        priority INTEGER NOT NULL DEFAULT 0,
+        tags TEXT NOT NULL DEFAULT '',
+        sort_order REAL NOT NULL DEFAULT 0,
+        recurrence TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        parent_id INTEGER,
+        task_date TEXT,
+        time_block_id INTEGER
+      )`,
+		);
+	} catch (e) {
+		console.warn("Tasks table creation failed (non-fatal):", e);
+	}
+
+	try {
+		await database.execute(
+			`CREATE TABLE IF NOT EXISTS notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL DEFAULT '',
+        content TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+      )`,
+		);
+	} catch (e) {
+		console.warn("Notes table creation failed (non-fatal):", e);
+	}
+
+	try {
+		await database.execute(
 			"CREATE INDEX IF NOT EXISTS idx_tasks_created ON tasks(date(created_at))",
 		);
 		await database.execute(
@@ -65,7 +101,8 @@ export async function getDb(): Promise<Database> {
 	// Detect if we're running outside Tauri (e.g. browser dev server)
 	const isTauri =
 		typeof window !== "undefined" &&
-		(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ !== undefined;
+		(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ !==
+			undefined;
 
 	if (!isTauri) {
 		db = createBrowserDb() as unknown as Database;
@@ -118,8 +155,9 @@ function createBrowserDb() {
 	let autoId = Date.now();
 	const tables = load();
 	if (Object.keys(tables).length === 0) {
-		tables["tasks"] = [];
-		tables["settings"] = [];
+		tables.tasks = [];
+		tables.settings = [];
+		tables.notes = [];
 		save(tables);
 	}
 
@@ -140,15 +178,15 @@ function createBrowserDb() {
 				for (let i = 0; i < cols.length; i++) {
 					row[cols[i]] = vals[i] ?? null;
 				}
-				if (row["created_at"] === undefined || row["created_at"] === null) {
-					row["created_at"] = new Date().toISOString();
+				if (row.created_at === undefined || row.created_at === null) {
+					row.created_at = new Date().toISOString();
 				}
-				if (row["sort_order"] === undefined || row["sort_order"] === null) {
+				if (row.sort_order === undefined || row.sort_order === null) {
 					const maxSort = Math.max(
 						0,
 						...table.map((r) => (r as Record<string, number>).sort_order || 0),
 					);
-					row["sort_order"] = maxSort + 1;
+					row.sort_order = maxSort + 1;
 				}
 				table.push(row);
 				data[tableName] = table;
@@ -167,8 +205,9 @@ function createBrowserDb() {
 					for (let i = 0; i < setCols.length; i++) {
 						row[setCols[i]] = params?.[i] ?? null;
 					}
-					if (sql.includes("is_done = 1")) row["completed_at"] = new Date().toISOString();
-					if (sql.includes("is_done = 0")) row["completed_at"] = null;
+					if (sql.includes("is_done = 1"))
+						row.completed_at = new Date().toISOString();
+					if (sql.includes("is_done = 0")) row.completed_at = null;
 				}
 				save(data);
 				return { rowsAffected: row ? 1 : 0 };
@@ -249,7 +288,9 @@ function createBrowserDb() {
 				if (keyMatch) {
 					const idx = Number(keyMatch[1]) - 1;
 					const key = params?.[idx] as string;
-					result = result.filter((r) => (r as Record<string, unknown>).key === key);
+					result = result.filter(
+						(r) => (r as Record<string, unknown>).key === key,
+					);
 				}
 
 				const dateMatch = whereClause.match(/task_date\s*=\s*\$?(\d+)/i);
@@ -259,7 +300,9 @@ function createBrowserDb() {
 					result = result.filter((r) => r.task_date === date);
 				}
 
-				const betweenMatch = whereClause.match(/task_date\s+BETWEEN\s+\$?(\d+)/i);
+				const betweenMatch = whereClause.match(
+					/task_date\s+BETWEEN\s+\$?(\d+)/i,
+				);
 				if (betweenMatch) {
 					const idx = Number(betweenMatch[1]) - 1;
 					const startDate = params?.[idx] as string;
@@ -281,19 +324,15 @@ function createBrowserDb() {
 				);
 			}
 			if (sql.includes("ORDER BY completed_at DESC")) {
-				result.sort(
-					(a, b) =>
-						String(b.completed_at || "").localeCompare(
-							String(a.completed_at || ""),
-						),
+				result.sort((a, b) =>
+					String(b.completed_at || "").localeCompare(
+						String(a.completed_at || ""),
+					),
 				);
 			}
 			if (sql.includes("ORDER BY") && sql.includes("started_at DESC")) {
-				result.sort(
-					(a, b) =>
-						String(b.started_at || "").localeCompare(
-							String(a.started_at || ""),
-						),
+				result.sort((a, b) =>
+					String(b.started_at || "").localeCompare(String(a.started_at || "")),
 				);
 			}
 

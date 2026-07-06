@@ -1,4 +1,11 @@
-import { Check, Inbox, Pencil, Search, Trash2 } from "lucide-react";
+import {
+	Check,
+	ChevronDown,
+	ChevronRight,
+	Inbox,
+	Search,
+	Trash2,
+} from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Task } from "../lib/db";
@@ -73,7 +80,7 @@ export const TaskList = memo(function TaskList({
 		? tasks.filter(
 				(t) =>
 					t.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-					(t.tags && t.tags.toLowerCase().includes(searchQuery.toLowerCase())),
+					t.tags?.toLowerCase().includes(searchQuery.toLowerCase()),
 			)
 		: tasks;
 
@@ -94,7 +101,9 @@ export const TaskList = memo(function TaskList({
 		return (
 			<div className="flex-1 flex flex-col items-center justify-center text-center py-8 gap-2">
 				<Search size={20} className="text-text-quaternary" strokeWidth={1.5} />
-				<p className="text-sm text-text-quaternary">{t("task.no_matches", "No matches for")} "{searchQuery}"</p>
+				<p className="text-sm text-text-quaternary">
+					{t("task.no_matches", "No matches for")} "{searchQuery}"
+				</p>
 			</div>
 		);
 	}
@@ -108,7 +117,7 @@ export const TaskList = memo(function TaskList({
 				<span className="text-sm text-text-quaternary">
 					{doneCount}/{tasks.length} {t("common.done", "done")}
 				</span>
-				{		streak && streak > 0 ? (
+				{streak && streak > 0 ? (
 					<span className="text-[11px] text-[#eab308]">
 						{streak} {t("stats.day_streak")} 🔥
 					</span>
@@ -128,7 +137,7 @@ export const TaskList = memo(function TaskList({
 							<div
 								role="checkbox"
 								aria-checked={task.is_done}
-								className={`flex items-center gap-3 px-4 py-2.5 rounded-[8px] transition-colors cursor-pointer
+								className={`flex items-center gap-3 px-4 py-3.5 rounded-[10px] transition-colors cursor-pointer
                   ${task.is_done ? "opacity-40" : "hover:bg-surface-glass/60"}
                   ${isExpanded ? "bg-surface-glass-edge rounded-b-none" : ""}
                   ${isFocused && !isExpanded ? "ring-1 ring-accent-primary/40 bg-accent-subtle" : ""}`}
@@ -136,17 +145,42 @@ export const TaskList = memo(function TaskList({
 									setExpandedId(isExpanded ? null : task.id);
 								}}
 							>
+								{/* Expand chevron */}
+								<button
+									onClick={(e) => {
+										e.stopPropagation();
+										setExpandedId(isExpanded ? null : task.id);
+									}}
+									className={`flex-shrink-0 text-text-quaternary hover:text-accent-primary transition-colors cursor-pointer rounded-[4px] p-0.5 ${FOCUS_RING}`}
+									title={
+										isExpanded
+											? t("shortcuts.collapse") || "Collapse"
+											: t("shortcuts.edit_task")
+									}
+									aria-label={
+										isExpanded
+											? t("shortcuts.collapse") || "Collapse"
+											: t("shortcuts.edit_task")
+									}
+								>
+									{isExpanded ? (
+										<ChevronDown size={14} />
+									) : (
+										<ChevronRight size={14} />
+									)}
+								</button>
+
 								{/* Checkbox */}
 								<button
 									onClick={(e) => {
 										e.stopPropagation();
 										toggle(task.id);
 									}}
-									className={`flex-shrink-0 w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer ${FOCUS_RING}
+									className={`flex-shrink-0 w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer ${FOCUS_RING}
                     ${task.is_done ? "bg-accent-primary border-accent-primary" : "border-border-default hover:border-accent-primary"}`}
 								>
 									{task.is_done && (
-										<Check size={10} className="text-white stroke-[3]" />
+										<Check size={12} className="text-white stroke-[3]" />
 									)}
 								</button>
 
@@ -155,7 +189,7 @@ export const TaskList = memo(function TaskList({
 
 								{/* Text */}
 								<span
-									className={`flex-1 text-sm truncate ${task.is_done ? "line-through text-text-quaternary" : "text-text-primary"}`}
+									className={`flex-1 text-[15px] leading-snug truncate ${task.is_done ? "line-through text-text-quaternary" : "text-text-primary"}`}
 								>
 									{task.text || t("task.untitled")}
 								</span>
@@ -166,27 +200,12 @@ export const TaskList = memo(function TaskList({
 										{tags.map((tag) => (
 											<span
 												key={tag}
-												className="text-[11px] px-2 py-[2px] rounded bg-accent-subtle text-accent-primary"
+												className="text-xs px-2 py-[3px] rounded bg-accent-subtle text-accent-primary"
 											>
 												#{tag}
 											</span>
 										))}
 									</div>
-								)}
-
-								{/* Edit button */}
-								{!task.is_done && (
-									<button
-										onClick={(e) => {
-											e.stopPropagation();
-											setExpandedId(isExpanded ? null : task.id);
-										}}
-										className={`flex-shrink-0 text-text-quaternary hover:text-accent-primary transition-colors cursor-pointer rounded-[6px] p-0.5 ${FOCUS_RING}`}
-										title={t("shortcuts.edit_task")}
-										aria-label={t("shortcuts.edit_task")}
-									>
-										<Pencil size={12} />
-									</button>
 								)}
 
 								{/* Delete button */}
@@ -196,10 +215,10 @@ export const TaskList = memo(function TaskList({
 										onDelete(task.id);
 									}}
 									className={`flex-shrink-0 text-text-quaternary hover:text-[#ef4444] transition-colors cursor-pointer rounded-[6px] p-0.5 ${FOCUS_RING}`}
-										title={t("shortcuts.delete_task")}
-										aria-label={t("shortcuts.delete_task")}
+									title={t("shortcuts.delete_task")}
+									aria-label={t("shortcuts.delete_task")}
 								>
-									<Trash2 size={13} />
+									<Trash2 size={14} />
 								</button>
 							</div>
 
@@ -269,7 +288,7 @@ function TaskDetailRow({
 	};
 
 	return (
-		<div className="px-3 pb-3 pt-1 rounded-[6px] rounded-t-none bg-surface-glass-edge space-y-2">
+		<div className="px-4 pb-4 pt-2 rounded-[8px] rounded-t-none bg-surface-glass-edge space-y-3">
 			{/* Text */}
 			<div>
 				<label className="text-[10px] text-text-quaternary uppercase tracking-wide">
@@ -291,7 +310,7 @@ function TaskDetailRow({
 						}
 						if (e.key === "Escape") onClose();
 					}}
-					className={`w-full bg-input-bg text-text-primary text-[13px] px-2.5 py-1.5 rounded-[6px] border border-border-default focus:border-accent-primary transition-colors ${FOCUS_RING}`}
+					className={`w-full bg-input-bg text-text-primary text-[14px] px-3 py-2 rounded-[8px] border border-border-default focus:border-accent-primary transition-colors ${FOCUS_RING}`}
 				/>
 			</div>
 
@@ -338,7 +357,7 @@ function TaskDetailRow({
 					}}
 					onBlur={handleBlur}
 					placeholder={t("task.detail.tags_placeholder", "comma, separated")}
-					className={`w-full bg-input-bg text-text-primary text-[12px] px-2.5 py-1.5 rounded-[6px] border border-border-default focus:border-accent-primary transition-colors placeholder-input-placeholder ${FOCUS_RING}`}
+					className={`w-full bg-input-bg text-text-primary text-[13px] px-3 py-2 rounded-[8px] border border-border-default focus:border-accent-primary transition-colors placeholder-input-placeholder ${FOCUS_RING}`}
 				/>
 			</div>
 
@@ -354,9 +373,9 @@ function TaskDetailRow({
 						setDirty(true);
 					}}
 					onBlur={handleBlur}
-					rows={2}
+					rows={3}
 					placeholder={t("task.detail.notes_placeholder", "Add notes...")}
-					className={`w-full bg-input-bg text-text-primary text-[12px] px-2.5 py-1.5 rounded-[6px] border border-border-default focus:border-accent-primary transition-colors resize-none placeholder-input-placeholder ${FOCUS_RING}`}
+					className={`w-full bg-input-bg text-text-primary text-[13px] px-3 py-2 rounded-[8px] border border-border-default focus:border-accent-primary transition-colors resize-none placeholder-input-placeholder ${FOCUS_RING}`}
 				/>
 			</div>
 
@@ -364,7 +383,12 @@ function TaskDetailRow({
 			<div className="flex items-center justify-between pt-1">
 				<div className="text-[10px] text-text-quaternary">
 					{t("task.detail.created")} {task.created_at.slice(0, 10)}
-					{task.completed_at && <> · {t("task.detail.completed")} {task.completed_at.slice(0, 10)}</>}
+					{task.completed_at && (
+						<>
+							{" "}
+							· {t("task.detail.completed")} {task.completed_at.slice(0, 10)}
+						</>
+					)}
 				</div>
 				<div className="flex gap-2">
 					<button
