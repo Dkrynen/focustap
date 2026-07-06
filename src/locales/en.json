@@ -297,5 +297,26 @@
 	"toast": {
 		"task_added": "Task added",
 		"pro_activated": "Pro activated!"
+	},
+	"workspace": {
+		"title": "Workspaces",
+		"workspaces": "Workspaces",
+		"members": "Members",
+		"invite": "Invite member",
+		"invite_placeholder": "email@example.com",
+		"new_placeholder": "New workspace name",
+		"pending_invites": "Pending invites"
+	},
+	"auth": {
+		"welcome": "Welcome to FocusTap",
+		"welcome_desc": "Sign in with your email to enable team features",
+		"email_placeholder": "you@example.com",
+		"send_magic_link": "Send Magic Link",
+		"check_email": "Check your inbox",
+		"check_email_desc": "We sent a magic link to {{email}}. Click it to sign in.",
+		"use_different_email": "Use a different email",
+		"magic_link_hint": "No password needed. The link expires in 24 hours.",
+		"logout": "Sign out",
+		"account": "Account"
 	}
 }

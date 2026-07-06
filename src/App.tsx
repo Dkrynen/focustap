@@ -10,9 +10,11 @@ import {
 	ListChecks,
 	Settings,
 	Table,
+	Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AuthPage } from "./components/AuthPage";
 import { CalendarView } from "./components/CalendarView";
 import { DayPlanner } from "./components/DayPlanner";
 import { FocusAnalytics } from "./components/FocusAnalytics";
@@ -26,8 +28,12 @@ import { TaskDetail } from "./components/TaskDetail";
 import { TaskInput } from "./components/TaskInput";
 import { TaskList } from "./components/TaskList";
 import { TaskSearch } from "./components/TaskSearch";
+import { WorkspacePanel } from "./components/WorkspacePanel";
 import { initAnalytics } from "./lib/analytics";
+import { useAuthStore } from "./lib/auth-store";
 import { exportToCSVFile, exportToMarkdownFile } from "./lib/export";
+import { flushQueue, onOnlineChange, subscribeWorkspace } from "./lib/sync";
+import { useWorkspaceStore } from "./lib/workspace-store";
 import { useTaskStore } from "./store";
 
 function App() {
@@ -46,6 +52,8 @@ function App() {
 		setOnboardingDone,
 		loadKeybindings,
 	} = useTaskStore();
+	const { user, initialized: authInitialized, checkSession } = useAuthStore();
+	const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
 	const [mounted, setMounted] = useState(false);
 	const [statsOpen, setStatsOpen] = useState(false);
 	const [calendarOpen, setCalendarOpen] = useState(false);
@@ -53,11 +61,14 @@ function App() {
 	const [focusOpen, setFocusOpen] = useState(false);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [shortcutOverlayOpen, setShortcutOverlayOpen] = useState(false);
+	const [workspaceOpen, setWorkspaceOpen] = useState(false);
 	const [exportOpen, setExportOpen] = useState(false);
 	const exportOpenRef = useRef(false);
 	const shortcutOverlayOpenRef = useRef(false);
 	const settingsOpenRef = useRef(false);
 	const searchRef = useRef<HTMLInputElement>(null);
+	const [userMenuOpen, setUserMenuOpen] = useState(false);
+	const userMenuRef = useRef<HTMLDivElement>(null);
 
 	// Keep refs in sync with state
 	useEffect(() => {
@@ -71,6 +82,41 @@ function App() {
 	}, [settingsOpen]);
 
 	useEffect(() => {
+		const handler = (e: MouseEvent) => {
+			if (
+				userMenuOpen &&
+				userMenuRef.current &&
+				!userMenuRef.current.contains(e.target as Node)
+			) {
+				setUserMenuOpen(false);
+			}
+		};
+		document.addEventListener("mousedown", handler);
+		return () => document.removeEventListener("mousedown", handler);
+	}, [userMenuOpen]);
+
+	useEffect(() => {
+		checkSession();
+	}, [checkSession]);
+
+	useEffect(() => {
+		const unsub = onOnlineChange((online) => {
+			if (online) flushQueue();
+		});
+		return unsub;
+	}, []);
+
+	useEffect(() => {
+		if (!activeWorkspaceId) return;
+		const unsub = subscribeWorkspace(
+			activeWorkspaceId,
+			() => {},
+			() => {},
+		);
+		return unsub;
+	}, [activeWorkspaceId]);
+
+	useEffect(() => {
 		loadTasks();
 		loadKeybindings();
 		initAnalytics();
@@ -81,12 +127,19 @@ function App() {
 		const root = document.documentElement;
 		// Apply stored theme preset
 		const storedPreset = localStorage.getItem("focustap-theme-preset") as
-			| "midnight" | "aurora" | "sepia" | "evergreen" | "monochrome"
+			| "midnight"
+			| "aurora"
+			| "sepia"
+			| "evergreen"
+			| "monochrome"
 			| null;
 		if (storedPreset) {
 			root.classList.remove(
-				"theme-midnight", "theme-aurora", "theme-sepia",
-				"theme-evergreen", "theme-monochrome",
+				"theme-midnight",
+				"theme-aurora",
+				"theme-sepia",
+				"theme-evergreen",
+				"theme-monochrome",
 			);
 			root.classList.add(`theme-${storedPreset}`);
 		}
@@ -244,6 +297,21 @@ function App() {
 		return () => window.removeEventListener("keydown", handler);
 	}, []);
 
+	const requiresAuth = Boolean(import.meta.env.VITE_SUPABASE_URL);
+	const showAuthWall = requiresAuth && authInitialized && !user;
+
+	if (requiresAuth && !authInitialized) {
+		return (
+			<div className="h-full flex items-center justify-center bg-surface-primary">
+				<div className="animate-spin w-5 h-5 border-2 border-accent-primary border-t-transparent rounded-full" />
+			</div>
+		);
+	}
+
+	if (showAuthWall) {
+		return <AuthPage />;
+	}
+
 	return (
 		<div
 			className={`h-full flex flex-col bg-surface-primary ${mounted ? "animate-fade-in" : "opacity-0"}`}
@@ -251,7 +319,9 @@ function App() {
 			{/* Header */}
 			<div className="flex items-center gap-2 px-4 pt-3 pb-2 select-none">
 				<ListChecks size={16} className="text-accent-primary" />
-				<span className="text-xs font-medium text-text-secondary">{t("app.name")}</span>
+				<span className="text-xs font-medium text-text-secondary">
+					{t("app.name")}
+				</span>
 				{streak > 0 && (
 					<span className="text-[11px] text-[#eab308]">{streak}🔥</span>
 				)}
@@ -264,6 +334,7 @@ function App() {
 				{/* Toolbar */}
 				<div className="ml-auto flex items-center gap-1">
 					<button
+						type="button"
 						onClick={() => setStatsOpen(true)}
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("stats.title")}
@@ -271,6 +342,7 @@ function App() {
 						<BarChart3 size={13} />
 					</button>
 					<button
+						type="button"
 						onClick={() => setCalendarOpen(true)}
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("calendar.today")}
@@ -278,6 +350,7 @@ function App() {
 						<Calendar size={13} />
 					</button>
 					<button
+						type="button"
 						onClick={() => setDayPlannerOpen(true)}
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("day_planner.title")}
@@ -285,6 +358,7 @@ function App() {
 						<Clock size={13} />
 					</button>
 					<button
+						type="button"
 						onClick={() => useTaskStore.getState().setNotesPanelOpen(true)}
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("notes.title")}
@@ -292,6 +366,7 @@ function App() {
 						<Edit3 size={13} />
 					</button>
 					<button
+						type="button"
 						onClick={() => setFocusOpen(true)}
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("focus.title")}
@@ -300,6 +375,7 @@ function App() {
 					</button>
 					<div className="relative">
 						<button
+							type="button"
 							onClick={() => setExportOpen(!exportOpen)}
 							className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 							title={t("task.export.title")}
@@ -309,6 +385,7 @@ function App() {
 						{exportOpen && (
 							<div className="absolute right-0 top-full mt-1 w-[130px] bg-surface-deep border border-border-subtle rounded-[6px] shadow-xl z-50 overflow-hidden">
 								<button
+									type="button"
 									onClick={() => {
 										setExportOpen(false);
 										exportToMarkdownFile();
@@ -318,6 +395,7 @@ function App() {
 									<FileText size={12} /> {t("task.export.markdown")}
 								</button>
 								<button
+									type="button"
 									onClick={() => {
 										setExportOpen(false);
 										exportToCSVFile();
@@ -329,7 +407,21 @@ function App() {
 							</div>
 						)}
 					</div>
+
+					{/* Workspace */}
+					{user && (
+						<button
+							type="button"
+							onClick={() => setWorkspaceOpen(true)}
+							className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
+							title={t("workspace.title")}
+						>
+							<Users size={13} />
+						</button>
+					)}
+
 					<button
+						type="button"
 						onClick={() => setSettingsOpen(true)}
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("settings.title")}
@@ -353,7 +445,9 @@ function App() {
 				/>
 
 				{loading && (
-					<div className="text-center py-6 text-text-quaternary text-xs">{t("common.loading")}</div>
+					<div className="text-center py-6 text-text-quaternary text-xs">
+						{t("common.loading")}
+					</div>
 				)}
 
 				{!loading && (
@@ -392,6 +486,10 @@ function App() {
 			<DayPlanner
 				open={dayPlannerOpen}
 				onClose={() => setDayPlannerOpen(false)}
+			/>
+			<WorkspacePanel
+				open={workspaceOpen}
+				onClose={() => setWorkspaceOpen(false)}
 			/>
 		</div>
 	);
