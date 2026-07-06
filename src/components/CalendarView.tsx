@@ -213,7 +213,7 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
                       ${selectedDay === dateStr ? "bg-accent-primary/10" : "hover:bg-surface-glass"}`}
 									>
 										<span
-											className={`text-[10px] ${isToday ? "text-accent-primary font-medium" : "text-text-tertiary"}`}
+											className={`text-xs ${isToday ? "text-accent-primary font-medium" : "text-text-tertiary"}`}
 										>
 											{d.getDate()}
 										</span>
@@ -294,7 +294,7 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 					{selectedDay && (
 						<div className="mt-4">
 							<div className="flex items-center justify-between mb-2">
-								<h3 className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide">
+								<h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wide">
 									{selectedDay}
 								</h3>
 								{selectedDay !== todayStr && unassigned.length > 0 && (
@@ -310,7 +310,7 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 												<button
 													key={ut.id}
 													onClick={() => handleScheduleTask(ut.id, selectedDay)}
-													className={`w-full text-left px-2.5 py-1.5 text-[11px] text-text-secondary
+													className={`w-full text-left px-2.5 py-1.5 text-xs text-text-secondary
                                      hover:bg-accent-primary/10 hover:text-text-primary transition-colors cursor-pointer truncate rounded-[6px] ${FOCUS_RING}`}
 												>
 													{ut.text || t("task.untitled")}
@@ -331,7 +331,7 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 								)}
 							</div>
 							{selectedDayTasks.length === 0 ? (
-								<p className="text-[11px] text-text-tertiary/60 italic">
+								<p className="text-xs text-text-tertiary/60 italic">
 									{t("calendar.no_tasks_desc")}
 								</p>
 							) : (

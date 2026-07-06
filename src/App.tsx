@@ -317,9 +317,9 @@ function App() {
 			className={`h-full flex flex-col bg-surface-primary ${mounted ? "animate-fade-in" : "opacity-0"}`}
 		>
 			{/* Header */}
-			<div className="flex items-center gap-2 px-4 pt-3 pb-2 select-none">
-				<ListChecks size={16} className="text-accent-primary" />
-				<span className="text-xs font-medium text-text-secondary">
+			<div className="flex items-center gap-2 px-5 pt-4 pb-3 select-none">
+				<ListChecks size={18} className="text-accent-primary" />
+				<span className="text-sm font-medium text-text-secondary">
 					{t("app.name")}
 				</span>
 				{streak > 0 && (
@@ -339,7 +339,7 @@ function App() {
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("stats.title")}
 					>
-						<BarChart3 size={13} />
+						<BarChart3 size={15} />
 					</button>
 					<button
 						type="button"
@@ -347,7 +347,7 @@ function App() {
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("calendar.today")}
 					>
-						<Calendar size={13} />
+						<Calendar size={15} />
 					</button>
 					<button
 						type="button"
@@ -355,7 +355,7 @@ function App() {
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("day_planner.title")}
 					>
-						<Clock size={13} />
+						<Clock size={15} />
 					</button>
 					<button
 						type="button"
@@ -363,7 +363,7 @@ function App() {
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("notes.title")}
 					>
-						<Edit3 size={13} />
+						<Edit3 size={15} />
 					</button>
 					<button
 						type="button"
@@ -371,7 +371,7 @@ function App() {
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("focus.title")}
 					>
-						<BrainCircuit size={13} />
+						<BrainCircuit size={15} />
 					</button>
 					<div className="relative">
 						<button
@@ -380,7 +380,7 @@ function App() {
 							className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 							title={t("task.export.title")}
 						>
-							<Download size={13} />
+							<Download size={15} />
 						</button>
 						{exportOpen && (
 							<div className="absolute right-0 top-full mt-1 w-[130px] bg-surface-deep border border-border-subtle rounded-[6px] shadow-xl z-50 overflow-hidden">
@@ -416,7 +416,7 @@ function App() {
 							className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 							title={t("workspace.title")}
 						>
-							<Users size={13} />
+							<Users size={15} />
 						</button>
 					)}
 
@@ -426,18 +426,18 @@ function App() {
 						className="text-text-quaternary hover:text-text-primary transition-colors cursor-pointer p-1"
 						title={t("settings.title")}
 					>
-						<Settings size={14} />
+						<Settings size={16} />
 					</button>
 				</div>
 			</div>
 
 			{/* Pomodoro */}
-			<div className="px-4 pb-1">
+			<div className="px-5 pb-2">
 				<PomodoroTimer />
 			</div>
 
 			{/* Main */}
-			<div className="flex flex-col flex-1 px-4 pb-4 min-h-0 gap-2">
+			<div className="flex flex-col flex-1 px-5 pb-5 min-h-0 gap-2">
 				<TaskInput />
 				<TaskSearch
 					inputRef={searchRef as React.RefObject<HTMLInputElement | null>}

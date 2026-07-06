@@ -156,26 +156,26 @@ export function StatisticsPanel({ open, onClose }: StatisticsPanelProps) {
 							<div className="text-lg font-medium text-text-primary">
 								{totalCompleted}
 							</div>
-							<div className="text-[10px] text-text-tertiary">{t("stats.days30")}</div>
+							<div className="text-xs text-text-tertiary">{t("stats.days30")}</div>
 						</div>
 						<div className="bg-surface-glass rounded-[8px] p-2.5 text-center">
 							<div className="text-lg font-medium text-text-primary">
 								{currentStreak}
 							</div>
-							<div className="text-[10px] text-text-tertiary">{t("stats.day_streak")}</div>
+							<div className="text-xs text-text-tertiary">{t("stats.day_streak")}</div>
 						</div>
 						<div className="bg-surface-glass rounded-[8px] p-2.5 text-center">
 							<div className="text-lg font-medium text-text-primary">
 								{daysWithTasks}
 							</div>
-							<div className="text-[10px] text-text-tertiary">{t("stats.active_days")}</div>
+							<div className="text-xs text-text-tertiary">{t("stats.active_days")}</div>
 						</div>
 					</div>
 
 					{/* Daily Trend Chart */}
 					{tab === "trend" && (
 						<div>
-							<h3 className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide mb-3">
+							<h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-3">
 								{t("stats.daily_trend_title")}
 							</h3>
 							<div className="flex items-end gap-[3px] h-[100px]">
@@ -211,7 +211,7 @@ export function StatisticsPanel({ open, onClose }: StatisticsPanelProps) {
 					{/* Streak Calendar */}
 					{tab === "streak" && (
 						<div>
-							<h3 className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide mb-3">
+							<h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-3">
 								{t("stats.streak_history_title")}
 							</h3>
 							<div className="flex gap-[3px]">
@@ -262,7 +262,7 @@ export function StatisticsPanel({ open, onClose }: StatisticsPanelProps) {
 					{/* Heatmap */}
 					{tab === "heatmap" && (
 						<div>
-							<h3 className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide mb-3">
+							<h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-3">
 								{t("stats.heatmap_title")}
 							</h3>
 							<div className="overflow-x-auto">

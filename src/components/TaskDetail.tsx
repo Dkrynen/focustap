@@ -142,7 +142,7 @@ export function TaskDetail() {
 			<div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
 					{/* Text */}
 					<div>
-						<label className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide mb-1 block">
+						<label className="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-1 block">
 							{t("task.detail.task_label")}
 						</label>
 						<input
@@ -159,7 +159,7 @@ export function TaskDetail() {
 
 					{/* Priority */}
 					<div>
-						<label className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide mb-1.5 block">
+						<label className="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-1.5 block">
 							Priority
 						</label>
 						<div className="flex gap-1.5">
@@ -188,7 +188,7 @@ export function TaskDetail() {
 
 					{/* Tags */}
 					<div>
-						<label className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide mb-1 block">
+						<label className="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-1 block">
 							{t("task.detail.tags")}
 						</label>
 						<input
@@ -205,7 +205,7 @@ export function TaskDetail() {
 
 					{/* Recurrence */}
 					<div>
-						<label className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide mb-1.5 block">
+						<label className="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-1.5 block">
 							{t("task.detail.recurrence_label")}
 						</label>
 						<div className="flex gap-1.5 flex-wrap">
@@ -254,7 +254,7 @@ export function TaskDetail() {
 										setDirty(false);
 										await loadTasks();
 									}}
-									className={`px-2 text-[10px] text-text-tertiary hover:text-red-400 transition-colors cursor-pointer rounded-[6px] ${FOCUS_RING}`}
+									className={`px-2 text-xs text-text-tertiary hover:text-red-400 transition-colors cursor-pointer rounded-[6px] ${FOCUS_RING}`}
 								>
 									{t("task.detail.clear")}
 								</button>
@@ -264,7 +264,7 @@ export function TaskDetail() {
 
 					{/* Time Block */}
 					<div>
-						<label className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide mb-1 block">
+						<label className="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-1 block">
 							{t("task.detail.time_block")}
 						</label>
 						<select
@@ -291,7 +291,7 @@ export function TaskDetail() {
 
 					{/* Notes */}
 					<div>
-						<label className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide mb-1 block">
+						<label className="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-1 block">
 							{t("task.detail.notes")}
 						</label>
 						<textarea
@@ -313,14 +313,14 @@ export function TaskDetail() {
 							</label>
 							<button
 								onClick={() => addSubtask(task.id)}
-								className={`flex items-center gap-1 text-[11px] text-accent-primary hover:text-accent-hover transition-colors cursor-pointer rounded-[6px] px-1 py-0.5 ${FOCUS_RING}`}
+								className={`flex items-center gap-1 text-xs text-accent-primary hover:text-accent-hover transition-colors cursor-pointer rounded-[6px] px-1 py-0.5 ${FOCUS_RING}`}
 							>
 								<Plus size={11} /> {t("task.detail.add")}
 							</button>
 						</div>
 						<div className="space-y-1">
 							{subtasks.length === 0 && (
-								<p className="text-[11px] text-text-tertiary/60 italic">
+								<p className="text-xs text-text-tertiary/60 italic">
 									{t("task.detail.no_subtasks")}
 								</p>
 							)}
@@ -358,17 +358,17 @@ export function TaskDetail() {
 
 					{/* Metadata */}
 					<div className="pt-2 border-t border-border-subtle space-y-1.5">
-						<div className="flex justify-between text-[10px]">
+						<div className="flex justify-between text-xs">
 							<span className="text-text-tertiary">{t("task.detail.created")}</span>
 							<span className="text-text-secondary">{task.created_at}</span>
 						</div>
 						{task.completed_at && (
-							<div className="flex justify-between text-[10px]">
+							<div className="flex justify-between text-xs">
 								<span className="text-text-tertiary">{t("task.detail.completed")}</span>
 								<span className="text-text-secondary">{task.completed_at}</span>
 							</div>
 						)}
-						<div className="flex justify-between text-[10px]">
+						<div className="flex justify-between text-xs">
 							<span className="text-text-tertiary">{t("task.detail.id")}</span>
 							<span className="text-text-secondary">#{task.id}</span>
 						</div>

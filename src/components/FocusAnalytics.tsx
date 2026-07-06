@@ -110,7 +110,7 @@ export function FocusAnalytics({ open, onClose }: FocusAnalyticsProps) {
 					{/* KPI Grid */}
 					<div className="grid grid-cols-2 gap-2">
 						<div className="bg-surface-glass rounded-[8px] p-3">
-							<div className="flex items-center gap-1.5 text-[10px] text-text-tertiary mb-1">
+							<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
 								<Clock size={11} /> {t("focus.best_hour")}
 							</div>
 							<div className="text-base font-medium text-text-primary">
@@ -118,7 +118,7 @@ export function FocusAnalytics({ open, onClose }: FocusAnalyticsProps) {
 							</div>
 						</div>
 						<div className="bg-surface-glass rounded-[8px] p-3">
-							<div className="flex items-center gap-1.5 text-[10px] text-text-tertiary mb-1">
+							<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
 								<TrendingUp size={11} /> {t("focus.best_day")}
 							</div>
 							<div className="text-base font-medium text-text-primary">
@@ -126,7 +126,7 @@ export function FocusAnalytics({ open, onClose }: FocusAnalyticsProps) {
 							</div>
 						</div>
 						<div className="bg-surface-glass rounded-[8px] p-3">
-							<div className="flex items-center gap-1.5 text-[10px] text-text-tertiary mb-1">
+							<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
 								{t("focus.consistency_label")}
 							</div>
 							<div className="text-base font-medium text-text-primary">
@@ -134,7 +134,7 @@ export function FocusAnalytics({ open, onClose }: FocusAnalyticsProps) {
 							</div>
 						</div>
 						<div className="bg-surface-glass rounded-[8px] p-3">
-							<div className="flex items-center gap-1.5 text-[10px] text-text-tertiary mb-1">
+							<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
 								{t("focus.avg_daily_label")}
 							</div>
 							<div className="text-base font-medium text-text-primary">
@@ -146,7 +146,7 @@ export function FocusAnalytics({ open, onClose }: FocusAnalyticsProps) {
 					{/* Pomodoro count */}
 					<div className="bg-surface-glass rounded-[8px] p-3 flex items-center justify-between">
 						<div>
-							<div className="text-[10px] text-text-tertiary">
+							<div className="text-xs text-text-tertiary">
 								{t("focus.total_pomodoros")}
 							</div>
 							<div className="text-base font-medium text-text-primary mt-0.5">
@@ -162,7 +162,7 @@ export function FocusAnalytics({ open, onClose }: FocusAnalyticsProps) {
 					<div>
 						<div className="flex items-center gap-1.5 mb-3">
 							<Lightbulb size={13} className="text-amber-400" />
-							<h3 className="text-[11px] font-medium text-text-tertiary uppercase tracking-wide">
+							<h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wide">
 								{t("focus.suggestions_title")}
 							</h3>
 						</div>
@@ -178,7 +178,7 @@ export function FocusAnalytics({ open, onClose }: FocusAnalyticsProps) {
 									className="bg-surface-glass rounded-[8px] p-3 border-l-2 border-accent-primary"
 								>
 									<p className="text-xs text-text-primary">{s.text}</p>
-									<p className="text-[10px] text-text-tertiary mt-0.5">
+									<p className="text-xs text-text-tertiary mt-0.5">
 										{s.reason}
 									</p>
 								</div>

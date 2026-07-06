@@ -76,12 +76,12 @@ CREATE POLICY members_select_member ON workspace_members
     FOR SELECT
     USING (public.is_workspace_member(workspace_id));
 
--- Auto-insert when creating workspace (handled by trigger)
+-- Users can add themselves as members (e.g., accepting an invite)
 CREATE POLICY members_insert_self ON workspace_members
     FOR INSERT
     WITH CHECK (
         user_id = auth.uid()
-        AND role = 'owner'
+        AND role = 'member'
     );
 
 -- Admins can insert new members

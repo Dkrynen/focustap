@@ -350,7 +350,7 @@ function ThemeTab() {
 						<button
 							key={opt.value}
 							onClick={() => setTheme(opt.value)}
-							className={`flex flex-1 flex-col items-center gap-2 px-3 py-3 rounded-[8px] border transition-colors cursor-pointer ${FOCUS_RING} ${
+							className={`flex flex-1 flex-col items-center gap-2 px-3 py-3 rounded-[10px] border transition-colors cursor-pointer ${FOCUS_RING} ${
 								theme === opt.value
 									? "border-accent-primary bg-accent-primary/10 text-accent-primary"
 									: "border-border-default bg-white/5 text-text-tertiary hover:border-accent-primary/40 hover:text-text-secondary"
@@ -373,7 +373,7 @@ function ThemeTab() {
 						<button
 							key={preset.value}
 							onClick={() => setThemePreset(preset.value)}
-							className={`flex flex-1 flex-col items-center gap-2 px-2 py-3 rounded-[8px] border transition-colors cursor-pointer ${FOCUS_RING} ${
+							className={`flex flex-1 flex-col items-center gap-2 px-2 py-3 rounded-[10px] border transition-colors cursor-pointer ${FOCUS_RING} ${
 								themePreset === preset.value
 									? "border-accent-primary bg-accent-primary/10 text-accent-primary"
 									: "border-border-default bg-white/5 text-text-tertiary hover:border-accent-primary/40 hover:text-text-secondary"
@@ -384,7 +384,7 @@ function ThemeTab() {
 								className="w-5 h-5 rounded-full"
 								style={{ background: preset.color }}
 							/>
-							<span className="text-[10px] font-medium">
+							<span className="text-xs font-medium">
 								{t(`settings.theme.preset_${preset.value}`)}
 							</span>
 						</button>

@@ -62,12 +62,12 @@ export function PomodoroTimer() {
 				: t("pomodoro.phase_idle");
 
 	return (
-		<div className="flex items-center gap-3 px-3 py-2 rounded-[10px] bg-surface-glass border border-border-subtle">
+		<div className="flex items-center gap-3 px-4 py-3 rounded-[12px] bg-surface-glass/60 border border-border-subtle/50 backdrop-blur-sm">
 			{/* SVG progress ring */}
-			<div className="relative w-[44px] h-[44px] flex-shrink-0">
+			<div className="relative w-[52px] h-[52px] flex-shrink-0">
 				<svg
-					width="44"
-					height="44"
+					width="52"
+					height="52"
 					viewBox="0 0 80 80"
 					className="rotate-[-90deg]"
 				>
@@ -92,14 +92,14 @@ export function PomodoroTimer() {
 						className="transition-all duration-1000 ease-linear"
 					/>
 				</svg>
-				<span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-text-primary tabular-nums">
+				<span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-text-primary tabular-nums">
 					{formatTime(pomodoroTimeRemaining)}
 				</span>
 			</div>
 
 			{/* Label + task context */}
 			<div className="flex flex-col min-w-0 flex-1">
-				<span className="text-[11px] font-medium text-text-secondary">
+				<span className="text-xs font-medium text-text-secondary">
 					{label}
 				</span>
 				{pomodoroActiveTaskId && (
@@ -116,29 +116,29 @@ export function PomodoroTimer() {
 				{isRunning ? (
 					<button
 						onClick={pomodoroPause}
-						className={`p-1.5 rounded-[6px] text-text-tertiary hover:text-text-primary transition-colors cursor-pointer ${FOCUS_RING}`}
+						className={`p-2 rounded-[6px] text-text-tertiary hover:text-text-primary transition-colors cursor-pointer ${FOCUS_RING}`}
 						title={t("pomodoro.pause")}
 						aria-label={t("pomodoro.pause")}
 					>
-						<Pause size={14} />
+						<Pause size={16} />
 					</button>
 				) : (
 					<button
 						onClick={() => pomodoroStart()}
-						className={`p-1.5 rounded-[6px] text-text-tertiary hover:text-accent-primary transition-colors cursor-pointer ${FOCUS_RING}`}
+						className={`p-2 rounded-[6px] text-text-tertiary hover:text-accent-primary transition-colors cursor-pointer ${FOCUS_RING}`}
 						title={t("pomodoro.start")}
 						aria-label={t("pomodoro.start")}
 					>
-						<Play size={14} />
+						<Play size={16} />
 					</button>
 				)}
 				<button
 					onClick={pomodoroReset}
-					className={`p-1.5 rounded-[6px] text-text-tertiary hover:text-red-400 transition-colors cursor-pointer ${FOCUS_RING}`}
+					className={`p-2 rounded-[6px] text-text-tertiary hover:text-red-400 transition-colors cursor-pointer ${FOCUS_RING}`}
 					title={t("pomodoro.reset")}
 					aria-label={t("pomodoro.reset")}
 				>
-					<RotateCcw size={13} />
+					<RotateCcw size={15} />
 				</button>
 			</div>
 		</div>

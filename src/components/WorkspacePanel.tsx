@@ -108,11 +108,11 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 				) : (
 					<WifiOff size={11} className="text-red-400" />
 				)}
-				<span className="text-[11px] text-text-tertiary">
+				<span className="text-xs text-text-tertiary">
 					{online ? "Connected" : "Offline"}
 				</span>
 				{pendingOps > 0 && (
-					<span className="text-[11px] text-yellow-400 ml-auto">
+					<span className="text-xs text-yellow-400 ml-auto">
 						{pendingOps} pending
 					</span>
 				)}
@@ -129,7 +129,7 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 					<>
 						{/* Workspace list */}
 						<div className="px-4 pt-3 pb-2">
-							<span className="text-[11px] font-medium text-text-quaternary uppercase tracking-wider">
+							<span className="text-xs font-medium text-text-quaternary uppercase tracking-wider">
 								{t("workspace.workspaces")}
 							</span>
 						</div>
@@ -203,7 +203,7 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 											key={m.id}
 											className="flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary"
 										>
-											<div className="w-5 h-5 rounded-full bg-accent-subtle flex items-center justify-center text-[10px] text-accent-primary font-medium shrink-0">
+											<div className="w-6 h-6 rounded-full bg-accent-subtle flex items-center justify-center text-xs text-accent-primary font-medium shrink-0">
 												{m.user_id.slice(0, 2).toUpperCase()}
 											</div>
 											<span className="truncate flex-1">
@@ -219,7 +219,7 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 														e.target.value as "owner" | "admin" | "member",
 													)
 												}
-												className="text-[11px] bg-surface-deep border border-border-subtle rounded-[4px] px-1.5 py-0.5 text-text-secondary outline-none cursor-pointer"
+												className="text-xs bg-surface-deep border border-border-subtle rounded-[4px] px-1.5 py-0.5 text-text-secondary outline-none cursor-pointer"
 											>
 												<option value="owner">Owner</option>
 												<option value="admin">Admin</option>
@@ -240,9 +240,9 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 
 								{/* Invite */}
 								<div className="px-4 pt-3 pb-2">
-									<span className="text-[11px] font-medium text-text-quaternary uppercase tracking-wider">
-										{t("workspace.invite")}
-									</span>
+<span className="text-xs font-medium text-text-quaternary uppercase tracking-wider">
+								{t("workspace.members")}
+							</span>
 								</div>
 								<form onSubmit={handleInvite} className="px-4 pb-2">
 									<div className="flex gap-1.5">
@@ -272,7 +272,7 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 								{/* Pending invites */}
 								{invites.filter((i) => i.status === "pending").length > 0 && (
 									<div className="px-4 pb-2">
-										<span className="text-[10px] text-text-quaternary">
+										<span className="text-xs text-text-quaternary">
 											{t("workspace.pending_invites")}
 										</span>
 										{invites
@@ -284,7 +284,7 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 												>
 													<Mail size={10} className="shrink-0" />
 													<span className="truncate flex-1">{inv.email}</span>
-													<span className="text-[10px] text-yellow-400">
+													<span className="text-xs text-yellow-400">
 														{inv.status}
 													</span>
 												</div>

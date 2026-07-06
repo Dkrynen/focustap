@@ -134,7 +134,7 @@ export function DayPlanner({ open, onClose }: DayPlannerProps) {
 										<span className="text-xs font-medium text-text-primary truncate">
 											{block.label}
 										</span>
-										<span className="text-[10px] text-text-tertiary font-mono whitespace-nowrap">
+										<span className="text-xs text-text-tertiary font-mono whitespace-nowrap">
 											{formatTimeRange(block.start_time, block.end_time)}
 										</span>
 										{isNow && (
@@ -156,7 +156,7 @@ export function DayPlanner({ open, onClose }: DayPlannerProps) {
 								{/* Block tasks */}
 								<div className="px-3 pb-2 space-y-1">
 									{blockTasks.length === 0 && (
-										<p className="text-[10px] text-text-tertiary/50 italic py-1">
+										<p className="text-xs text-text-tertiary/50 italic py-1">
 											{t("day_planner.no_tasks_in_block")}
 										</p>
 									)}
@@ -223,7 +223,7 @@ export function DayPlanner({ open, onClose }: DayPlannerProps) {
 												const val = e.target.value;
 												if (val) handleAssignTask(task.id, Number(val));
 											}}
-											className={`text-[10px] bg-surface-glass text-text-tertiary border border-border-subtle
+											className={`text-xs bg-surface-glass text-text-tertiary border border-border-subtle
                                  rounded-[6px] px-1.5 py-0.5 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity ${FOCUS_RING}`}
 										>
 											<option value="">{t("day_planner.assign_to_block")}</option>

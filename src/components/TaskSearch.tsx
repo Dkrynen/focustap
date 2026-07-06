@@ -28,8 +28,8 @@ export function TaskSearch({ inputRef, onSearchActive }: TaskSearchProps) {
 	return (
 		<div className="relative">
 			<Search
-				size={13}
-				className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none"
+				size={15}
+				className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none"
 			/>
 			<input
 				ref={input as React.RefObject<HTMLInputElement>}
@@ -43,10 +43,10 @@ export function TaskSearch({ inputRef, onSearchActive }: TaskSearchProps) {
 					}
 				}}
 				placeholder={t("common.search")}
-				className="w-full bg-surface-glass text-text-primary placeholder-text-tertiary/50
-					   text-xs pl-8 pr-8 py-2 rounded-[6px]
-					   border border-border-default
-					   focus:border-accent-primary/30
+				className="w-full bg-surface-glass/60 text-text-primary placeholder-text-tertiary/50 backdrop-blur-sm
+					   text-sm pl-9 pr-9 py-2.5 rounded-[10px]
+					   border border-border-default/50
+					   focus:border-accent-primary/40
 					   transition-all duration-150 font-sans
 					   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]
 					   focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-primary)]"
@@ -64,7 +64,7 @@ export function TaskSearch({ inputRef, onSearchActive }: TaskSearchProps) {
 					      rounded-[6px] p-0.5"
 					aria-label={t("common.clear_search", "Clear search")}
 				>
-					<X size={13} />
+					<X size={15} />
 				</button>
 			)}
 		</div>

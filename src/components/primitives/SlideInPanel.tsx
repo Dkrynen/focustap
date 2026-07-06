@@ -61,11 +61,11 @@ export const SlideInPanel = forwardRef<HTMLDivElement, SlideInPanelProps>(
 					onKeyDown={onKeyDown}
 					tabIndex={onKeyDown ? -1 : undefined}
 				>
-					<div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-in" />
+					<div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" />
 					{/* biome-ignore lint/a11y/noStaticElementInteractions: stopPropagation only, not interactive */}
 					<div
 						role="presentation"
-						className={`relative glass-elevated rounded-[14px] shadow-2xl w-[320px] max-w-[90vw] max-h-[80vh] overflow-y-auto animate-slide-in ${className}`}
+						className={`relative glass-elevated rounded-[16px] shadow-2xl w-[320px] max-w-[90vw] max-h-[80vh] overflow-y-auto animate-slide-in ${className}`}
 						onClick={(e) => e.stopPropagation()}
 					>
 						{children}
@@ -88,14 +88,14 @@ export const SlideInPanel = forwardRef<HTMLDivElement, SlideInPanelProps>(
 				<div
 					role="button"
 					tabIndex={0}
-					className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-in"
+					className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
 					onClick={onClose}
 					onKeyDown={(e) => {
 						if (e.key === "Enter" || e.key === " ") onClose();
 					}}
 				/>
 				<div
-					className={`absolute right-0 top-0 h-full glass-elevated rounded-l-[14px] shadow-2xl flex flex-col transition-transform duration-200 ease-out-expo ${className}`}
+					className={`absolute right-0 top-0 h-full glass-elevated rounded-l-[16px] shadow-2xl flex flex-col transition-transform duration-200 ease-out-expo ${className}`}
 					style={{
 						transform: showContent ? "translateX(0)" : "translateX(100%)",
 					}}

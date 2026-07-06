@@ -15,6 +15,7 @@ interface PendingOp {
 
 const STORAGE_KEY = "focustap-sync-queue";
 const CACHE_KEY = "focustap-team-tasks-cache";
+const MAX_RETRIES = 5;
 
 /* ── Offline Queue ── */
 
@@ -106,10 +107,17 @@ export async function flushQueue(): Promise<{
 		} catch {
 			op.retries++;
 			failed++;
+			if (op.retries >= MAX_RETRIES) {
+				console.warn(
+					`[sync] dropping op ${op.id} (${op.type}) after ${MAX_RETRIES} failed retries`,
+				);
+			}
 		}
 	}
 
-	const remaining = queue.filter((o) => o.retries > 0);
+	const remaining = queue.filter(
+		(o) => o.retries > 0 && o.retries < MAX_RETRIES,
+	);
 	saveQueue(remaining);
 	return { flushed, failed };
 }

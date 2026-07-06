@@ -80,8 +80,8 @@ export const TaskList = memo(function TaskList({
 	// Empty state
 	if (tasks.length === 0) {
 		return (
-			<div className="flex-1 flex flex-col items-center justify-center text-center py-8 gap-2">
-				<Inbox size={24} className="text-text-quaternary" strokeWidth={1.5} />
+			<div className="flex-1 flex flex-col items-center justify-center text-center py-12 gap-3">
+				<Inbox size={28} className="text-text-quaternary" strokeWidth={1.5} />
 				<p className="text-sm text-text-quaternary">{t("task.no_tasks_yet")}</p>
 				<p className="text-xs text-text-quaternary">
 					{t("task.no_tasks_hint")}
@@ -105,7 +105,7 @@ export const TaskList = memo(function TaskList({
 		<div className="flex flex-col flex-1 min-h-0">
 			{/* Progress bar */}
 			<div className="mb-2 flex items-center justify-between">
-				<span className="text-xs text-text-quaternary">
+				<span className="text-sm text-text-quaternary">
 					{doneCount}/{tasks.length} {t("common.done", "done")}
 				</span>
 				{		streak && streak > 0 ? (
@@ -128,8 +128,8 @@ export const TaskList = memo(function TaskList({
 							<div
 								role="checkbox"
 								aria-checked={task.is_done}
-								className={`flex items-center gap-2 px-3 py-2 rounded-[6px] transition-colors cursor-pointer
-                  ${task.is_done ? "opacity-40" : "hover:bg-surface-glass"}
+								className={`flex items-center gap-3 px-4 py-2.5 rounded-[8px] transition-colors cursor-pointer
+                  ${task.is_done ? "opacity-40" : "hover:bg-surface-glass/60"}
                   ${isExpanded ? "bg-surface-glass-edge rounded-b-none" : ""}
                   ${isFocused && !isExpanded ? "ring-1 ring-accent-primary/40 bg-accent-subtle" : ""}`}
 								onClick={() => {
@@ -142,7 +142,7 @@ export const TaskList = memo(function TaskList({
 										e.stopPropagation();
 										toggle(task.id);
 									}}
-									className={`flex-shrink-0 w-[16px] h-[16px] rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer ${FOCUS_RING}
+									className={`flex-shrink-0 w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer ${FOCUS_RING}
                     ${task.is_done ? "bg-accent-primary border-accent-primary" : "border-border-default hover:border-accent-primary"}`}
 								>
 									{task.is_done && (
@@ -155,7 +155,7 @@ export const TaskList = memo(function TaskList({
 
 								{/* Text */}
 								<span
-									className={`flex-1 text-[13px] truncate ${task.is_done ? "line-through text-text-quaternary" : "text-text-primary"}`}
+									className={`flex-1 text-sm truncate ${task.is_done ? "line-through text-text-quaternary" : "text-text-primary"}`}
 								>
 									{task.text || t("task.untitled")}
 								</span>
@@ -166,7 +166,7 @@ export const TaskList = memo(function TaskList({
 										{tags.map((tag) => (
 											<span
 												key={tag}
-												className="text-[10px] px-1.5 py-[1px] rounded bg-accent-subtle text-accent-primary"
+												className="text-[11px] px-2 py-[2px] rounded bg-accent-subtle text-accent-primary"
 											>
 												#{tag}
 											</span>

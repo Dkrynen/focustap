@@ -126,7 +126,7 @@ export function NotesPanel() {
 					{editingId === null && (
 						<div className="overflow-y-auto space-y-1">
 							{notes.length === 0 && (
-								<p className="text-[11px] text-text-tertiary/60 italic pt-2">
+								<p className="text-xs text-text-tertiary/60 italic pt-2">
 									{t("notes.no_notes")}
 								</p>
 							)}
@@ -143,13 +143,13 @@ export function NotesPanel() {
 									<div className="text-xs text-text-primary truncate font-medium">
 										{note.title || t("notes.title")}
 									</div>
-									<div className="text-[10px] text-text-tertiary truncate mt-0.5">
+									<div className="text-[11px] text-text-tertiary truncate mt-0.5">
 										{note.content
 											? note.content.slice(0, 40) +
 												(note.content.length > 40 ? "…" : "")
 											: t("notes.empty_content")}
 									</div>
-									<div className="text-[9px] text-text-quaternary mt-0.5">
+									<div className="text-[10px] text-text-quaternary mt-0.5">
 										{note.updated_at.slice(0, 10)}
 									</div>
 								</button>

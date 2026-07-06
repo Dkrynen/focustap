@@ -29,6 +29,9 @@
 	--color-status-success: #22c55e;
 
 	--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+	--radius: 0.75rem;
+	--shadow-glow: 0 0 80px -10px color-mix(in srgb, var(--accent-primary) 50%, transparent);
+	--shadow-elevated: 0 20px 60px -20px rgba(0, 0, 0, 0.8);
 }
 
 /* ── Midnight (default dark) ── */
@@ -46,8 +49,8 @@
 	--text-quaternary: #666;
 
 	--border-subtle: rgba(255, 255, 255, 0.04);
-	--border-default: rgba(255, 255, 255, 0.07);
-	--border-strong: rgba(255, 255, 255, 0.1);
+	--border-default: rgba(255, 255, 255, 0.06);
+	--border-strong: rgba(255, 255, 255, 0.08);
 
 	--input-bg: rgba(0, 0, 0, 0.3);
 	--input-placeholder: #555;
@@ -63,7 +66,7 @@
 	--surface-deep: #f0f0f0;
 	--surface-primary: #ffffff;
 	--surface-glass: rgba(0, 0, 0, 0.03);
-	--surface-glass-edge: rgba(0, 0, 0, 0.06);
+	--surface-glass-edge: rgba(0, 0, 0, 0.04);
 	--surface-elevated: rgba(0, 0, 0, 0.04);
 
 	--text-primary: #111111;
@@ -71,9 +74,9 @@
 	--text-tertiary: #888888;
 	--text-quaternary: #aaaaaa;
 
-	--border-subtle: rgba(0, 0, 0, 0.06);
-	--border-default: rgba(0, 0, 0, 0.1);
-	--border-strong: rgba(0, 0, 0, 0.15);
+	--border-subtle: rgba(0, 0, 0, 0.035);
+	--border-default: rgba(0, 0, 0, 0.06);
+	--border-strong: rgba(0, 0, 0, 0.09);
 
 	--input-bg: rgba(0, 0, 0, 0.04);
 	--input-placeholder: #999;
@@ -84,7 +87,7 @@
 	--surface-deep: #0a0a14;
 	--surface-primary: #0f0f1a;
 	--surface-glass: rgba(99, 102, 241, 0.04);
-	--surface-glass-edge: rgba(99, 102, 241, 0.08);
+	--surface-glass-edge: rgba(99, 102, 241, 0.05);
 	--surface-elevated: rgba(99, 102, 241, 0.05);
 
 	--text-primary: #e8e8f0;
@@ -92,9 +95,9 @@
 	--text-tertiary: #7878a0;
 	--text-quaternary: #585880;
 
-	--border-subtle: rgba(99, 102, 241, 0.06);
-	--border-default: rgba(99, 102, 241, 0.1);
-	--border-strong: rgba(99, 102, 241, 0.15);
+	--border-subtle: rgba(99, 102, 241, 0.035);
+	--border-default: rgba(99, 102, 241, 0.06);
+	--border-strong: rgba(99, 102, 241, 0.09);
 
 	--input-bg: rgba(0, 0, 0, 0.35);
 	--input-placeholder: #585880;
@@ -109,7 +112,7 @@
 	--surface-deep: #e8e8f5;
 	--surface-primary: #f4f4ff;
 	--surface-glass: rgba(99, 102, 241, 0.03);
-	--surface-glass-edge: rgba(99, 102, 241, 0.06);
+	--surface-glass-edge: rgba(99, 102, 241, 0.04);
 	--surface-elevated: rgba(99, 102, 241, 0.04);
 
 	--text-primary: #1a1a2e;
@@ -117,9 +120,9 @@
 	--text-tertiary: #8888aa;
 	--text-quaternary: #aaaacc;
 
-	--border-subtle: rgba(99, 102, 241, 0.06);
-	--border-default: rgba(99, 102, 241, 0.1);
-	--border-strong: rgba(99, 102, 241, 0.15);
+	--border-subtle: rgba(99, 102, 241, 0.035);
+	--border-default: rgba(99, 102, 241, 0.06);
+	--border-strong: rgba(99, 102, 241, 0.09);
 
 	--input-bg: rgba(99, 102, 241, 0.04);
 	--input-placeholder: #9999bb;
@@ -130,7 +133,7 @@
 	--surface-deep: #0f0b06;
 	--surface-primary: #1a120a;
 	--surface-glass: rgba(217, 119, 6, 0.04);
-	--surface-glass-edge: rgba(217, 119, 6, 0.08);
+	--surface-glass-edge: rgba(217, 119, 6, 0.05);
 	--surface-elevated: rgba(217, 119, 6, 0.05);
 
 	--text-primary: #e8d5c0;
@@ -138,9 +141,9 @@
 	--text-tertiary: #907858;
 	--text-quaternary: #706040;
 
-	--border-subtle: rgba(217, 119, 6, 0.06);
-	--border-default: rgba(217, 119, 6, 0.1);
-	--border-strong: rgba(217, 119, 6, 0.15);
+	--border-subtle: rgba(217, 119, 6, 0.035);
+	--border-default: rgba(217, 119, 6, 0.06);
+	--border-strong: rgba(217, 119, 6, 0.09);
 
 	--input-bg: rgba(0, 0, 0, 0.35);
 	--input-placeholder: #706040;
@@ -155,7 +158,7 @@
 	--surface-deep: #e8d8c8;
 	--surface-primary: #faf0e0;
 	--surface-glass: rgba(217, 119, 6, 0.03);
-	--surface-glass-edge: rgba(217, 119, 6, 0.06);
+	--surface-glass-edge: rgba(217, 119, 6, 0.04);
 	--surface-elevated: rgba(217, 119, 6, 0.04);
 
 	--text-primary: #1a1008;
@@ -163,9 +166,9 @@
 	--text-tertiary: #9a8070;
 	--text-quaternary: #baa890;
 
-	--border-subtle: rgba(217, 119, 6, 0.06);
-	--border-default: rgba(217, 119, 6, 0.1);
-	--border-strong: rgba(217, 119, 6, 0.15);
+	--border-subtle: rgba(217, 119, 6, 0.035);
+	--border-default: rgba(217, 119, 6, 0.06);
+	--border-strong: rgba(217, 119, 6, 0.09);
 
 	--input-bg: rgba(217, 119, 6, 0.04);
 	--input-placeholder: #baa890;
@@ -176,7 +179,7 @@
 	--surface-deep: #050f08;
 	--surface-primary: #0a1a0e;
 	--surface-glass: rgba(5, 150, 105, 0.04);
-	--surface-glass-edge: rgba(5, 150, 105, 0.08);
+	--surface-glass-edge: rgba(5, 150, 105, 0.05);
 	--surface-elevated: rgba(5, 150, 105, 0.05);
 
 	--text-primary: #c8e0d0;
@@ -184,9 +187,9 @@
 	--text-tertiary: #609070;
 	--text-quaternary: #407050;
 
-	--border-subtle: rgba(5, 150, 105, 0.06);
-	--border-default: rgba(5, 150, 105, 0.1);
-	--border-strong: rgba(5, 150, 105, 0.15);
+	--border-subtle: rgba(5, 150, 105, 0.035);
+	--border-default: rgba(5, 150, 105, 0.06);
+	--border-strong: rgba(5, 150, 105, 0.09);
 
 	--input-bg: rgba(0, 0, 0, 0.35);
 	--input-placeholder: #407050;
@@ -201,7 +204,7 @@
 	--surface-deep: #d8e8dc;
 	--surface-primary: #eefaf0;
 	--surface-glass: rgba(5, 150, 105, 0.03);
-	--surface-glass-edge: rgba(5, 150, 105, 0.06);
+	--surface-glass-edge: rgba(5, 150, 105, 0.04);
 	--surface-elevated: rgba(5, 150, 105, 0.04);
 
 	--text-primary: #081a0c;
@@ -209,9 +212,9 @@
 	--text-tertiary: #689070;
 	--text-quaternary: #90b098;
 
-	--border-subtle: rgba(5, 150, 105, 0.06);
-	--border-default: rgba(5, 150, 105, 0.1);
-	--border-strong: rgba(5, 150, 105, 0.15);
+	--border-subtle: rgba(5, 150, 105, 0.035);
+	--border-default: rgba(5, 150, 105, 0.06);
+	--border-strong: rgba(5, 150, 105, 0.09);
 
 	--input-bg: rgba(5, 150, 105, 0.04);
 	--input-placeholder: #90b098;
@@ -222,7 +225,7 @@
 	--surface-deep: #050505;
 	--surface-primary: #0f0f0f;
 	--surface-glass: rgba(255, 255, 255, 0.03);
-	--surface-glass-edge: rgba(255, 255, 255, 0.06);
+	--surface-glass-edge: rgba(255, 255, 255, 0.04);
 	--surface-elevated: rgba(255, 255, 255, 0.04);
 
 	--text-primary: #e0e0e0;
@@ -230,9 +233,9 @@
 	--text-tertiary: #707070;
 	--text-quaternary: #505050;
 
-	--border-subtle: rgba(255, 255, 255, 0.04);
-	--border-default: rgba(255, 255, 255, 0.07);
-	--border-strong: rgba(255, 255, 255, 0.1);
+	--border-subtle: rgba(255, 255, 255, 0.025);
+	--border-default: rgba(255, 255, 255, 0.04);
+	--border-strong: rgba(255, 255, 255, 0.06);
 
 	--input-bg: rgba(0, 0, 0, 0.35);
 	--input-placeholder: #505050;
@@ -247,7 +250,7 @@
 	--surface-deep: #e8e8e8;
 	--surface-primary: #f8f8f8;
 	--surface-glass: rgba(0, 0, 0, 0.03);
-	--surface-glass-edge: rgba(0, 0, 0, 0.06);
+	--surface-glass-edge: rgba(0, 0, 0, 0.04);
 	--surface-elevated: rgba(0, 0, 0, 0.04);
 
 	--text-primary: #181818;
@@ -255,9 +258,9 @@
 	--text-tertiary: #888888;
 	--text-quaternary: #a8a8a8;
 
-	--border-subtle: rgba(0, 0, 0, 0.06);
-	--border-default: rgba(0, 0, 0, 0.1);
-	--border-strong: rgba(0, 0, 0, 0.15);
+	--border-subtle: rgba(0, 0, 0, 0.035);
+	--border-default: rgba(0, 0, 0, 0.06);
+	--border-strong: rgba(0, 0, 0, 0.09);
 
 	--input-bg: rgba(0, 0, 0, 0.04);
 	--input-placeholder: #a8a8a8;
@@ -294,8 +297,8 @@ body {
 
 @utility glass-elevated {
 	background: var(--surface-elevated);
-	backdrop-filter: blur(16px);
-	-webkit-backdrop-filter: blur(16px);
+	backdrop-filter: blur(24px);
+	-webkit-backdrop-filter: blur(24px);
 }
 
 @keyframes fadeIn {

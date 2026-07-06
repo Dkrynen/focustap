@@ -62,9 +62,9 @@ export function TaskInput() {
 					}
 				}}
 				placeholder={t("task.input_placeholder")}
-				className="w-full bg-surface-glass text-text-primary placeholder-input-placeholder/50
-					   text-xs px-3 py-2 rounded-[6px] border border-border-default
-					   focus:border-accent-primary/30 transition-all duration-150
+				className="w-full bg-surface-glass/60 text-text-primary placeholder-input-placeholder/50 backdrop-blur-sm
+					   text-sm px-4 py-2.5 rounded-[10px] border border-border-default/50
+					   focus:border-accent-primary/40 transition-all duration-150
 					   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]
 					   focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-primary)]"
 				autoFocus

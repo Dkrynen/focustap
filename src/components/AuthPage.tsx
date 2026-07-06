@@ -98,7 +98,7 @@ export function AuthPage() {
 					</button>
 				</form>
 
-				<p className="text-[11px] text-text-quaternary max-w-[260px] leading-relaxed">
+				<p className="text-xs text-text-quaternary max-w-[280px] leading-relaxed">
 					{t("auth.magic_link_hint")}
 				</p>
 			</div>
