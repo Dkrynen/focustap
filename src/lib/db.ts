@@ -62,6 +62,16 @@ export async function getDb(): Promise<Database> {
 	if (db) return db;
 	if (dbPromise) return dbPromise;
 
+	// Detect if we're running outside Tauri (e.g. browser dev server)
+	const isTauri =
+		typeof window !== "undefined" &&
+		(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ !== undefined;
+
+	if (!isTauri) {
+		db = createBrowserDb() as unknown as Database;
+		return db;
+	}
+
 	let lastError: unknown;
 	for (let attempt = 1; attempt <= MAX_DB_RETRIES; attempt++) {
 		try {
@@ -84,6 +94,244 @@ export async function getDb(): Promise<Database> {
 	}
 
 	throw lastError;
+}
+
+/**
+ * Creates a minimal localStorage-backed database mock for use in browser dev mode.
+ * Supports the subset of SQL used throughout this file.
+ */
+function createBrowserDb() {
+	const STORE_KEY = "focustap-browser-db";
+
+	function load(): Record<string, unknown[]> {
+		try {
+			return JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
+		} catch {
+			return {};
+		}
+	}
+
+	function save(data: Record<string, unknown[]>): void {
+		localStorage.setItem(STORE_KEY, JSON.stringify(data));
+	}
+
+	let autoId = Date.now();
+	const tables = load();
+	if (Object.keys(tables).length === 0) {
+		tables["tasks"] = [];
+		tables["settings"] = [];
+		save(tables);
+	}
+
+	return {
+		async execute(sql: string, params?: unknown[]) {
+			const data = load();
+			const tableName = extractTableName(sql);
+			const table = (data[tableName] || []) as Record<string, unknown>[];
+
+			if (sql.startsWith("CREATE") || sql.startsWith("PRAGMA")) {
+				return { rowsAffected: 0, lastInsertId: 0 };
+			}
+
+			if (sql.startsWith("INSERT")) {
+				const cols = extractInsertColumns(sql);
+				const vals = params || [];
+				const row: Record<string, unknown> = { id: autoId++ };
+				for (let i = 0; i < cols.length; i++) {
+					row[cols[i]] = vals[i] ?? null;
+				}
+				if (row["created_at"] === undefined || row["created_at"] === null) {
+					row["created_at"] = new Date().toISOString();
+				}
+				if (row["sort_order"] === undefined || row["sort_order"] === null) {
+					const maxSort = Math.max(
+						0,
+						...table.map((r) => (r as Record<string, number>).sort_order || 0),
+					);
+					row["sort_order"] = maxSort + 1;
+				}
+				table.push(row);
+				data[tableName] = table;
+				save(data);
+				return { rowsAffected: 1, lastInsertId: Number(row.id) };
+			}
+
+			if (sql.startsWith("UPDATE")) {
+				const setCols = extractUpdateCols(sql);
+				const idIdx = setCols.length; // params are [val1, val2, ..., whereValue]
+				const id = Number(params?.[idIdx]);
+				const row = table.find(
+					(r) => Number((r as Record<string, unknown>).id) === id,
+				) as Record<string, unknown> | undefined;
+				if (row) {
+					for (let i = 0; i < setCols.length; i++) {
+						row[setCols[i]] = params?.[i] ?? null;
+					}
+					if (sql.includes("is_done = 1")) row["completed_at"] = new Date().toISOString();
+					if (sql.includes("is_done = 0")) row["completed_at"] = null;
+				}
+				save(data);
+				return { rowsAffected: row ? 1 : 0 };
+			}
+
+			if (sql.startsWith("DELETE")) {
+				const id = Number(params?.[0]);
+				const idx = table.findIndex(
+					(r) => Number((r as Record<string, unknown>).id) === id,
+				);
+				if (idx >= 0) table.splice(idx, 1);
+				data[tableName] = table;
+				save(data);
+				return { rowsAffected: idx >= 0 ? 1 : 0 };
+			}
+
+			return { rowsAffected: 0 };
+		},
+
+		async select<T = Record<string, unknown>>(
+			sql: string,
+			params?: unknown[],
+		): Promise<T[]> {
+			const data = load();
+			const tableName = extractTableName(sql);
+			const table = (data[tableName] || []) as Record<string, unknown>[];
+
+			// Handle SELECT MAX(...)
+			const maxMatch = sql.match(/SELECT\s+MAX\s*\(\s*(\w+)\s*\)/i);
+			if (maxMatch) {
+				const col = maxMatch[1];
+				const max = Math.max(0, ...table.map((r) => Number(r[col] || 0)));
+				return [{ [maxMatch[1]]: max }] as unknown as T[];
+			}
+
+			// Handle COUNT
+			const countMatch = sql.match(/SELECT\s+COUNT\s*\(\s*\*\s*\)/i);
+			if (countMatch) {
+				return [{ "COUNT(*)": table.length }] as unknown as T[];
+			}
+
+			let result = [...table];
+
+			// WHERE clauses
+			const whereClause = extractWhereFull(sql);
+			if (whereClause) {
+				if (
+					whereClause.includes("date(created_at) = date('now')") ||
+					whereClause.includes("date(t.created_at) = date('now')")
+				) {
+					const today = new Date().toISOString().slice(0, 10);
+					result = result.filter(
+						(r) => (r.created_at as string)?.slice(0, 10) === today,
+					);
+				}
+				if (whereClause.includes("is_done = 0")) {
+					result = result.filter((r) => !r.is_done);
+				}
+				if (whereClause.includes("is_done = 1")) {
+					result = result.filter((r) => r.is_done);
+				}
+
+				const idMatch = whereClause.match(/id\s*=\s*\$?(\d+)/i);
+				if (idMatch) {
+					const paramIdx = Number(idMatch[1]) - 1;
+					const idVal = params?.[paramIdx] ?? Number(idMatch[1]);
+					result = result.filter((r) => Number(r.id) === Number(idVal));
+				}
+
+				const parentMatch = whereClause.match(/parent_id\s*=\s*\$?(\d+)/i);
+				if (parentMatch) {
+					const paramIdx = Number(parentMatch[1]) - 1;
+					const pid = params?.[paramIdx] ?? null;
+					result = result.filter((r) => r.parent_id === pid);
+				}
+
+				const keyMatch = whereClause.match(/key\s*=\s*\$(\d+)/i);
+				if (keyMatch) {
+					const idx = Number(keyMatch[1]) - 1;
+					const key = params?.[idx] as string;
+					result = result.filter((r) => (r as Record<string, unknown>).key === key);
+				}
+
+				const dateMatch = whereClause.match(/task_date\s*=\s*\$?(\d+)/i);
+				if (dateMatch) {
+					const idx = Number(dateMatch[1]) - 1;
+					const date = params?.[idx] as string;
+					result = result.filter((r) => r.task_date === date);
+				}
+
+				const betweenMatch = whereClause.match(/task_date\s+BETWEEN\s+\$?(\d+)/i);
+				if (betweenMatch) {
+					const idx = Number(betweenMatch[1]) - 1;
+					const startDate = params?.[idx] as string;
+					const endDate = params?.[idx + 1] as string;
+					if (startDate && endDate) {
+						result = result.filter(
+							(r) =>
+								(r.task_date as string) >= startDate &&
+								(r.task_date as string) <= endDate,
+						);
+					}
+				}
+			}
+
+			// ORDER BY
+			if (sql.includes("ORDER BY sort_order")) {
+				result.sort(
+					(a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0),
+				);
+			}
+			if (sql.includes("ORDER BY completed_at DESC")) {
+				result.sort(
+					(a, b) =>
+						String(b.completed_at || "").localeCompare(
+							String(a.completed_at || ""),
+						),
+				);
+			}
+			if (sql.includes("ORDER BY") && sql.includes("started_at DESC")) {
+				result.sort(
+					(a, b) =>
+						String(b.started_at || "").localeCompare(
+							String(a.started_at || ""),
+						),
+				);
+			}
+
+			return result as unknown as T[];
+		},
+	};
+}
+
+/** Extract table name from a SQL statement. */
+function extractTableName(sql: string): string {
+	const m = sql.match(/(?:FROM|INTO|UPDATE|TABLE\s+IF NOT EXISTS)\s+(\w+)/i);
+	return m ? m[1].toLowerCase() : "tasks";
+}
+
+/** Extract column names from INSERT INTO table (col1, col2, ...) */
+function extractInsertColumns(sql: string): string[] {
+	const m = sql.match(/\(([^)]+)\)\s*(?:VALUES|SELECT)/i);
+	if (!m) return [];
+	return m[1].split(",").map((c) => c.trim().replace(/['"]/g, ""));
+}
+
+/** Extract column names from SET col1=$1, col2=$2 */
+function extractUpdateCols(sql: string): string[] {
+	const m = sql.match(/SET\s+(.+?)\s+WHERE/i);
+	if (!m) return [];
+	return m[1]
+		.split(",")
+		.map((part) => {
+			const col = part.trim().split("=")[0]?.trim();
+			return col;
+		})
+		.filter(Boolean);
+}
+
+/** Extract full WHERE clause */
+function extractWhereFull(sql: string): string {
+	const m = sql.match(/WHERE\s+(.+?)(?:ORDER BY|GROUP BY|LIMIT|$)/is);
+	return m ? m[1].trim() : "";
 }
 
 export interface Task {
