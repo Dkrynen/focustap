@@ -17,6 +17,27 @@ type MemberRow = Database["public"]["Tables"]["workspace_members"]["Row"];
 type InviteRow = Database["public"]["Tables"]["workspace_invites"]["Row"];
 type MemberRole = Database["public"]["Enums"]["member_role"];
 
+const LOCAL_WORKSPACE_KEY = "focustap-local-workspace";
+
+function getLocalWorkspace(): WorkspaceRow {
+	const raw = localStorage.getItem(LOCAL_WORKSPACE_KEY);
+	if (raw) {
+		try {
+			return JSON.parse(raw);
+		} catch {
+			// parse failed — use default
+		}
+	}
+	return {
+		id: "local",
+		name: "Personal",
+		description: "Your local workspace",
+		created_by: "local",
+		created_at: new Date().toISOString(),
+		updated_at: new Date().toISOString(),
+	};
+}
+
 interface WorkspaceState {
 	workspaces: WorkspaceRow[];
 	activeWorkspaceId: string | null;
@@ -58,18 +79,28 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
 		set({ loading: true });
 		try {
 			const workspaces = await getUserWorkspaces();
-			set({
-				workspaces,
-				activeWorkspaceId: workspaces[0]?.id ?? null,
-				loading: false,
-			});
-			if (workspaces[0]) {
-				get().loadMembers(workspaces[0].id);
-				get().loadInvites(workspaces[0].id);
+			if (workspaces.length > 0) {
+				set({
+					workspaces,
+					activeWorkspaceId: workspaces[0]?.id ?? null,
+					loading: false,
+				});
+				if (workspaces[0]) {
+					get().loadMembers(workspaces[0].id);
+					get().loadInvites(workspaces[0].id);
+				}
+				return;
 			}
 		} catch {
-			set({ loading: false });
+			// supabase unavailable — use local workspace
 		}
+		// Fallback: use local workspace
+		const local = getLocalWorkspace();
+		set({
+			workspaces: [local],
+			activeWorkspaceId: local.id,
+			loading: false,
+		});
 	},
 
 	setActiveWorkspace: async (id) => {

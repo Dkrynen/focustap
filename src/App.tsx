@@ -5,6 +5,8 @@ import {
 	Search,
 	Settings,
 	Table,
+	Upload,
+	Archive,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -27,6 +29,13 @@ import { useAuthStore } from "./lib/auth-store";
 import { exportToCSVFile, exportToMarkdownFile } from "./lib/export";
 import { flushQueue, onOnlineChange, subscribeWorkspace } from "./lib/sync";
 import { useWorkspaceStore } from "./lib/workspace-store";
+import {
+	buildWorkspaceExport,
+	downloadBlob,
+	exportToJSON,
+	exportToMarkdown as exportWorkspaceMD,
+} from "./lib/workspace-export";
+import { importFromGoogleCalendar } from "./lib/calendar-import";
 import { useTaskStore } from "./store";
 
 function App() {
@@ -350,7 +359,10 @@ function App() {
 								<Download size={15} />
 							</button>
 							{exportOpen && (
-								<div className="absolute right-0 top-full mt-1 w-[130px] bg-surface-deep border border-border-subtle rounded-[10px] shadow-xl z-50 overflow-hidden">
+								<div className="absolute right-0 top-full mt-1 w-[160px] bg-surface-deep border border-border-subtle rounded-[10px] shadow-xl z-50 overflow-hidden">
+									<div className="px-3 pt-2 pb-1 text-[10px] text-text-quaternary uppercase tracking-wider font-medium">
+										Tasks
+									</div>
 									<button
 										type="button"
 										onClick={() => {
@@ -371,9 +383,102 @@ function App() {
 									>
 										<Table size={12} /> {t("task.export.csv")}
 									</button>
+									<div className="border-t border-border-subtle my-1" />
+									<div className="px-3 pt-1 pb-1 text-[10px] text-text-quaternary uppercase tracking-wider font-medium">
+										Workspace
+									</div>
+									<button
+										type="button"
+										onClick={() => {
+											setExportOpen(false);
+											const state = useTaskStore.getState();
+											const wsState = useWorkspaceStore.getState();
+											const ws = wsState.workspaces.find((w) => w.id === wsState.activeWorkspaceId);
+											const data = buildWorkspaceExport(
+												ws?.name || "Workspace",
+												ws?.id || "local",
+												state.tasks,
+												state.notes.map((n: { id: number; title: string; content: string; tags?: string }) => ({
+													id: n.id,
+													title: n.title,
+													content: n.content,
+													tags: n.tags || "",
+												})),
+											);
+											const json = exportToJSON(data);
+											const date = new Date().toLocaleDateString("en-CA");
+											downloadBlob(json, `focustap-workspace-${date}.json`, "application/json");
+										}}
+										className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-accent-subtle hover:text-text-primary transition-colors cursor-pointer"
+									>
+										<Archive size={12} /> Export JSON
+									</button>
+									<button
+										type="button"
+										onClick={() => {
+											setExportOpen(false);
+											const state = useTaskStore.getState();
+											const wsState = useWorkspaceStore.getState();
+											const ws = wsState.workspaces.find((w) => w.id === wsState.activeWorkspaceId);
+											const data = buildWorkspaceExport(
+												ws?.name || "Workspace",
+												ws?.id || "local",
+												state.tasks,
+												state.notes.map((n: { id: number; title: string; content: string; tags?: string }) => ({
+													id: n.id,
+													title: n.title,
+													content: n.content,
+													tags: n.tags || "",
+												})),
+											);
+											const md = exportWorkspaceMD(data);
+											const date = new Date().toLocaleDateString("en-CA");
+											downloadBlob(md, `focustap-workspace-${date}.md`, "text/markdown");
+										}}
+										className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-accent-subtle hover:text-text-primary transition-colors cursor-pointer"
+									>
+										<FileText size={12} /> Export Markdown
+									</button>
 								</div>
 							)}
 						</div>
+
+						{/* Calendar import (only when calendar view is active) */}
+						{activeView === "calendar" && (
+							<>
+								<button
+									type="button"
+									onClick={() => document.getElementById("calendar-csv-input")?.click()}
+									className="text-text-quaternary hover:text-accent-primary transition-colors cursor-pointer p-1"
+									title="Import Google Calendar CSV"
+								>
+									<Upload size={15} />
+								</button>
+								<input
+									id="calendar-csv-input"
+									type="file"
+									accept=".csv"
+									className="hidden"
+									onChange={(e) => {
+										const file = e.target.files?.[0];
+										if (!file) return;
+										const reader = new FileReader();
+										reader.onload = (ev) => {
+											const raw = ev.target?.result as string;
+											if (!raw) return;
+											const addTask = useTaskStore.getState().addTask;
+											const result = importFromGoogleCalendar(raw, (task) => {
+												addTask(task.text, task.task_date ? 0 : undefined, task.tags || undefined);
+											});
+											alert(`Imported ${result.imported} of ${result.total} events as tasks.`);
+										};
+										reader.readAsText(file);
+										// Reset so the same file can be re-imported
+										e.target.value = "";
+									}}
+								/>
+							</>
+						)}
 
 						<button
 							type="button"
