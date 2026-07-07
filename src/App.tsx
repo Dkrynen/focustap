@@ -1,12 +1,12 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import {
+	Archive,
 	Download,
 	FileText,
 	Search,
 	Settings,
 	Table,
 	Upload,
-	Archive,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,16 +26,16 @@ import { TaskSearch } from "./components/TaskSearch";
 
 import { initAnalytics } from "./lib/analytics";
 import { useAuthStore } from "./lib/auth-store";
+import { importFromGoogleCalendar } from "./lib/calendar-import";
 import { exportToCSVFile, exportToMarkdownFile } from "./lib/export";
 import { flushQueue, onOnlineChange, subscribeWorkspace } from "./lib/sync";
-import { useWorkspaceStore } from "./lib/workspace-store";
 import {
 	buildWorkspaceExport,
 	downloadBlob,
 	exportToJSON,
 	exportToMarkdown as exportWorkspaceMD,
 } from "./lib/workspace-export";
-import { importFromGoogleCalendar } from "./lib/calendar-import";
+import { useWorkspaceStore } from "./lib/workspace-store";
 import { useTaskStore } from "./store";
 
 function App() {
@@ -47,6 +47,7 @@ function App() {
 		loadTasks,
 		updateText,
 		remove,
+		setTaskDate,
 		streak,
 		isPro,
 		theme,
@@ -57,6 +58,7 @@ function App() {
 	const { user, initialized: authInitialized, checkSession } = useAuthStore();
 	const { workspaces, activeWorkspaceId, setActiveWorkspace } =
 		useWorkspaceStore();
+	const todayStr = new Date().toLocaleDateString("en-CA");
 	const [mounted, setMounted] = useState(false);
 	const [activeView, setActiveView] = useState<View>("today");
 	const [settingsOpen, setSettingsOpen] = useState(false);
@@ -393,21 +395,34 @@ function App() {
 											setExportOpen(false);
 											const state = useTaskStore.getState();
 											const wsState = useWorkspaceStore.getState();
-											const ws = wsState.workspaces.find((w) => w.id === wsState.activeWorkspaceId);
+											const ws = wsState.workspaces.find(
+												(w) => w.id === wsState.activeWorkspaceId,
+											);
 											const data = buildWorkspaceExport(
 												ws?.name || "Workspace",
 												ws?.id || "local",
 												state.tasks,
-												state.notes.map((n: { id: number; title: string; content: string; tags?: string }) => ({
-													id: n.id,
-													title: n.title,
-													content: n.content,
-													tags: n.tags || "",
-												})),
+												state.notes.map(
+													(n: {
+														id: number;
+														title: string;
+														content: string;
+														tags?: string;
+													}) => ({
+														id: n.id,
+														title: n.title,
+														content: n.content,
+														tags: n.tags || "",
+													}),
+												),
 											);
 											const json = exportToJSON(data);
 											const date = new Date().toLocaleDateString("en-CA");
-											downloadBlob(json, `focustap-workspace-${date}.json`, "application/json");
+											downloadBlob(
+												json,
+												`focustap-workspace-${date}.json`,
+												"application/json",
+											);
 										}}
 										className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-accent-subtle hover:text-text-primary transition-colors cursor-pointer"
 									>
@@ -419,21 +434,34 @@ function App() {
 											setExportOpen(false);
 											const state = useTaskStore.getState();
 											const wsState = useWorkspaceStore.getState();
-											const ws = wsState.workspaces.find((w) => w.id === wsState.activeWorkspaceId);
+											const ws = wsState.workspaces.find(
+												(w) => w.id === wsState.activeWorkspaceId,
+											);
 											const data = buildWorkspaceExport(
 												ws?.name || "Workspace",
 												ws?.id || "local",
 												state.tasks,
-												state.notes.map((n: { id: number; title: string; content: string; tags?: string }) => ({
-													id: n.id,
-													title: n.title,
-													content: n.content,
-													tags: n.tags || "",
-												})),
+												state.notes.map(
+													(n: {
+														id: number;
+														title: string;
+														content: string;
+														tags?: string;
+													}) => ({
+														id: n.id,
+														title: n.title,
+														content: n.content,
+														tags: n.tags || "",
+													}),
+												),
 											);
 											const md = exportWorkspaceMD(data);
 											const date = new Date().toLocaleDateString("en-CA");
-											downloadBlob(md, `focustap-workspace-${date}.md`, "text/markdown");
+											downloadBlob(
+												md,
+												`focustap-workspace-${date}.md`,
+												"text/markdown",
+											);
 										}}
 										className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-accent-subtle hover:text-text-primary transition-colors cursor-pointer"
 									>
@@ -448,7 +476,9 @@ function App() {
 							<>
 								<button
 									type="button"
-									onClick={() => document.getElementById("calendar-csv-input")?.click()}
+									onClick={() =>
+										document.getElementById("calendar-csv-input")?.click()
+									}
 									className="text-text-quaternary hover:text-accent-primary transition-colors cursor-pointer p-1"
 									title="Import Google Calendar CSV"
 								>
@@ -468,9 +498,16 @@ function App() {
 											if (!raw) return;
 											const addTask = useTaskStore.getState().addTask;
 											const result = importFromGoogleCalendar(raw, (task) => {
-												addTask(task.text, task.task_date ? 0 : undefined, task.tags || undefined);
+												addTask(
+													task.text,
+													task.task_date ? 0 : undefined,
+													task.tags || undefined,
+													task.task_date ?? null,
+												);
 											});
-											alert(`Imported ${result.imported} of ${result.total} events as tasks.`);
+											alert(
+												`Imported ${result.imported} of ${result.total} events as tasks.`,
+											);
 										};
 										reader.readAsText(file);
 										// Reset so the same file can be re-imported
@@ -518,11 +555,23 @@ function App() {
 							)}
 							{!loading && (
 								<TaskList
-									tasks={tasks}
+									tasks={
+										activeView === "today"
+											? tasks.filter(
+													(task) =>
+														task.task_date && task.task_date <= todayStr,
+												)
+											: tasks.filter((task) => !task.task_date)
+									}
 									onUpdateText={updateText}
 									onDelete={remove}
 									focusId={newTaskId}
 									streak={streak}
+									onScheduleToday={
+										activeView === "inbox"
+											? (id) => setTaskDate(id, todayStr)
+											: undefined
+									}
 								/>
 							)}
 						</>
@@ -535,7 +584,7 @@ function App() {
 				<DayPlanner open onClose={() => setActiveView("today")} />
 			)}
 			{activeView === "notes" && (
-				<NotesPanel />
+				<NotesPanel open onClose={() => setActiveView("today")} />
 			)}
 			{activeView === "calendar" && (
 				<CalendarView open onClose={() => setActiveView("today")} />

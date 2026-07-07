@@ -1,4 +1,5 @@
 import {
+	CalendarPlus,
 	Check,
 	ChevronDown,
 	ChevronRight,
@@ -20,6 +21,7 @@ interface TaskListProps {
 	onDelete: (id: number) => void;
 	focusId: number | null;
 	streak?: number;
+	onScheduleToday?: (id: number) => void;
 }
 
 function getPriorities(t: (key: string) => string) {
@@ -48,6 +50,7 @@ export const TaskList = memo(function TaskList({
 	onDelete,
 	focusId,
 	streak,
+	onScheduleToday,
 }: TaskListProps) {
 	const { t } = useTranslation();
 	const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -134,9 +137,11 @@ export const TaskList = memo(function TaskList({
 					return (
 						<div key={task.id} data-task-id={task.id}>
 							{/* Main task row */}
+							{/* biome-ignore lint/a11y/useSemanticElements: task row contains child buttons — nesting <button> inside <button> is invalid HTML */}
 							<div
-								role="checkbox"
-								aria-checked={task.is_done}
+								role="button"
+								tabIndex={0}
+								aria-expanded={isExpanded}
 								className={`flex items-center gap-3 px-4 py-3.5 rounded-[10px] transition-colors cursor-pointer
                   ${task.is_done ? "opacity-40" : "hover:bg-surface-glass/60"}
                   ${isExpanded ? "bg-surface-glass-edge rounded-b-none" : ""}
@@ -144,9 +149,16 @@ export const TaskList = memo(function TaskList({
 								onClick={() => {
 									setExpandedId(isExpanded ? null : task.id);
 								}}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault();
+										setExpandedId(isExpanded ? null : task.id);
+									}
+								}}
 							>
 								{/* Expand chevron */}
 								<button
+									type="button"
 									onClick={(e) => {
 										e.stopPropagation();
 										setExpandedId(isExpanded ? null : task.id);
@@ -172,6 +184,7 @@ export const TaskList = memo(function TaskList({
 
 								{/* Checkbox */}
 								<button
+									type="button"
 									onClick={(e) => {
 										e.stopPropagation();
 										toggle(task.id);
@@ -208,8 +221,25 @@ export const TaskList = memo(function TaskList({
 									</div>
 								)}
 
+								{/* Schedule to today (Inbox view) */}
+								{onScheduleToday && !task.task_date && (
+									<button
+										type="button"
+										onClick={(e) => {
+											e.stopPropagation();
+											onScheduleToday(task.id);
+										}}
+										className={`flex-shrink-0 text-text-quaternary hover:text-accent-primary transition-colors cursor-pointer rounded-[6px] p-0.5 ${FOCUS_RING}`}
+										title={t("task.schedule_today", "Schedule for today")}
+										aria-label={t("task.schedule_today", "Schedule for today")}
+									>
+										<CalendarPlus size={14} />
+									</button>
+								)}
+
 								{/* Delete button */}
 								<button
+									type="button"
 									onClick={(e) => {
 										e.stopPropagation();
 										onDelete(task.id);
@@ -291,11 +321,15 @@ function TaskDetailRow({
 		<div className="px-4 pb-4 pt-2 rounded-[8px] rounded-t-none bg-surface-glass-edge space-y-3">
 			{/* Text */}
 			<div>
-				<label className="text-[10px] text-text-quaternary uppercase tracking-wide">
+				<label
+					htmlFor={`task-text-${task.id}`}
+					className="text-[10px] text-text-quaternary uppercase tracking-wide"
+				>
 					{t("task.detail.task_label")}
 				</label>
 				<input
 					ref={textRef}
+					id={`task-text-${task.id}`}
 					type="text"
 					value={editText}
 					onChange={(e) => {
@@ -316,12 +350,13 @@ function TaskDetailRow({
 
 			{/* Priority */}
 			<div>
-				<label className="text-[10px] text-text-quaternary uppercase tracking-wide">
+				<span className="text-[10px] text-text-quaternary uppercase tracking-wide">
 					{t("task.detail.priority_label")}
-				</label>
+				</span>
 				<div className="flex gap-1.5 mt-1">
 					{getPriorities(t).map((p) => (
 						<button
+							type="button"
 							key={p.value}
 							onClick={() => onSetPriority(task.id, p.value)}
 							className={`px-2.5 py-1 rounded-[6px] text-[11px] transition-colors cursor-pointer ${FOCUS_RING}
@@ -345,10 +380,14 @@ function TaskDetailRow({
 
 			{/* Tags */}
 			<div>
-				<label className="text-[10px] text-text-quaternary uppercase tracking-wide">
+				<label
+					htmlFor={`task-tags-${task.id}`}
+					className="text-[10px] text-text-quaternary uppercase tracking-wide"
+				>
 					{t("task.detail.tags")}
 				</label>
 				<input
+					id={`task-tags-${task.id}`}
 					type="text"
 					value={editTags}
 					onChange={(e) => {
@@ -363,10 +402,14 @@ function TaskDetailRow({
 
 			{/* Notes */}
 			<div>
-				<label className="text-[10px] text-text-quaternary uppercase tracking-wide">
+				<label
+					htmlFor={`task-notes-${task.id}`}
+					className="text-[10px] text-text-quaternary uppercase tracking-wide"
+				>
 					{t("task.detail.notes")}
 				</label>
 				<textarea
+					id={`task-notes-${task.id}`}
 					value={editNotes}
 					onChange={(e) => {
 						setEditNotes(e.target.value);
@@ -392,6 +435,7 @@ function TaskDetailRow({
 				</div>
 				<div className="flex gap-2">
 					<button
+						type="button"
 						onClick={() => {
 							save();
 							onClose();

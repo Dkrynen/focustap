@@ -31,6 +31,7 @@ import {
 	uncompleteTask,
 	updateNoteContent,
 	updateNoteTitle,
+	updateTaskDate,
 	updateTaskNotes,
 	updateTaskPriority,
 	updateTaskTags,
@@ -50,12 +51,18 @@ interface TaskState {
 	streak: number;
 	searchQuery: string;
 	loadTasks: () => Promise<void>;
-	addTask: (text?: string, priority?: number, tags?: string) => Promise<void>;
+	addTask: (
+		text?: string,
+		priority?: number,
+		tags?: string,
+		taskDate?: string | null,
+	) => Promise<void>;
 	updateText: (id: number, text: string) => Promise<void>;
 	toggle: (id: number) => Promise<void>;
 	remove: (id: number) => Promise<void>;
 	setPriority: (id: number, priority: number) => Promise<void>;
 	setTags: (id: number, tags: string) => Promise<void>;
+	setTaskDate: (id: number, date: string | null) => Promise<void>;
 	moveTask: (id: number, direction: "up" | "down") => Promise<void>;
 	activeTaskIndex: number;
 	setActiveTaskIndex: (index: number) => void;
@@ -303,11 +310,16 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 		}
 	},
 
-	addTask: async (text?: string, priority?: number, tags?: string) => {
+	addTask: async (
+		text?: string,
+		priority?: number,
+		tags?: string,
+		taskDate?: string | null,
+	) => {
 		try {
 			const id = await createTask(text?.trim() || "", priority, tags);
+			const resolvedDate = taskDate ?? null;
 			const now = localDatetime();
-			const nowDate = now.slice(0, 10);
 			const newTask: Task = {
 				id,
 				text: text?.trim() || "",
@@ -320,14 +332,14 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 				recurrence: "",
 				notes: "",
 				parent_id: null,
-				task_date: nowDate,
+				task_date: resolvedDate,
 				time_block_id: null,
 			};
 			set((state) => ({
 				tasks: [...state.tasks, newTask],
 				newTaskId: id,
 			}));
-			enqueueTaskCreate(id, text?.trim() || "", nowDate).catch(() => {});
+			enqueueTaskCreate(id, text?.trim() || "", resolvedDate).catch(() => {});
 			trackEvent("task_created");
 			showToast(i18n.t("toast.task_added"), "success");
 		} catch (e) {
@@ -404,6 +416,21 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 		} catch (e) {
 			console.error("Failed to set priority", e);
 			showToast(i18n.t("errors.set_priority"));
+		}
+	},
+
+	setTaskDate: async (id, date) => {
+		try {
+			await updateTaskDate(id, date);
+			set((state) => ({
+				tasks: state.tasks.map((t) =>
+					t.id === id ? { ...t, task_date: date } : t,
+				),
+			}));
+			enqueueTaskUpdate(id, { taskDate: date }).catch(() => {});
+		} catch (e) {
+			console.error("Failed to set task date", e);
+			showToast(i18n.t("errors.update_task", "Could not update task"));
 		}
 	},
 
