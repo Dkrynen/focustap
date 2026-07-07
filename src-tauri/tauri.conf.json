@@ -25,7 +25,7 @@
 			}
 		],
 		"security": {
-			"csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: data:; font-src 'self'; connect-src 'self'"
+			"csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: data: https:; font-src 'self'; connect-src 'self' https://oauth2.googleapis.com https://login.microsoftonline.com https://www.googleapis.com https://graph.microsoft.com"
 		}
 	},
 	"plugins": {

@@ -1,9 +1,13 @@
+mod oauth;
+
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_sql::{Migration, MigrationKind};
 use tracing::{error, info};
+
+use oauth::OAuthAwaiters;
 
 pub struct FocusState {
     pub recently_shown: Arc<AtomicBool>,
@@ -174,6 +178,10 @@ pub fn run() {
         .plugin(tauri_plugin_licenseseat::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .invoke_handler(tauri::generate_handler![
+            oauth::start_oauth_listener,
+            oauth::await_oauth_callback,
+        ])
         .setup(|app| {
             use tauri::menu::{Menu, MenuItem};
             use tauri::tray::TrayIconBuilder;
@@ -181,6 +189,7 @@ pub fn run() {
             app.manage(FocusState {
                 recently_shown: Arc::new(AtomicBool::new(false)),
             });
+            app.manage(OAuthAwaiters::default());
 
             let show = MenuItem::with_id(app, "show", "Show FocusTap", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;

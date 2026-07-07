@@ -7,6 +7,11 @@ import { load } from "@tauri-apps/plugin-store";
 import { create } from "zustand";
 import { showToast } from "./components/Toast";
 import { trackEvent } from "./lib/analytics";
+import {
+	enqueueTaskCreate,
+	enqueueTaskDelete,
+	enqueueTaskUpdate,
+} from "./lib/calendar-sync";
 import type { Note, Task } from "./lib/db";
 import {
 	completeTaskWithChildren,
@@ -107,7 +112,9 @@ interface TaskState {
 	theme: "dark" | "light" | "system";
 	themePreset: "midnight" | "aurora" | "sepia" | "evergreen" | "monochrome";
 	setTheme: (theme: "dark" | "light" | "system") => Promise<void>;
-	setThemePreset: (preset: "midnight" | "aurora" | "sepia" | "evergreen" | "monochrome") => Promise<void>;
+	setThemePreset: (
+		preset: "midnight" | "aurora" | "sepia" | "evergreen" | "monochrome",
+	) => Promise<void>;
 
 	/* Locale */
 	locale: string;
@@ -222,8 +229,18 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 				| "monochrome"
 				| null;
 			const themePreset =
-				(storedPreset as "midnight" | "aurora" | "sepia" | "evergreen" | "monochrome") ||
-				(themePresetVal as "midnight" | "aurora" | "sepia" | "evergreen" | "monochrome") ||
+				(storedPreset as
+					| "midnight"
+					| "aurora"
+					| "sepia"
+					| "evergreen"
+					| "monochrome") ||
+				(themePresetVal as
+					| "midnight"
+					| "aurora"
+					| "sepia"
+					| "evergreen"
+					| "monochrome") ||
 				"midnight";
 			const locale = localeVal || "en";
 			set({
@@ -243,8 +260,11 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 			// Apply theme preset on load
 			const root = document.documentElement;
 			root.classList.remove(
-				"theme-midnight", "theme-aurora", "theme-sepia",
-				"theme-evergreen", "theme-monochrome",
+				"theme-midnight",
+				"theme-aurora",
+				"theme-sepia",
+				"theme-evergreen",
+				"theme-monochrome",
 			);
 			root.classList.add(`theme-${themePreset}`);
 			// Apply theme mode on load
@@ -261,8 +281,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 			const storedAccent = localStorage.getItem("focustap-accent");
 			if (storedAccent) {
 				root.style.setProperty("--accent-primary", storedAccent);
-				root.style.setProperty("--accent-hover", storedAccent + "cc");
-				root.style.setProperty("--accent-subtle", storedAccent + "26");
+				root.style.setProperty("--accent-hover", `${storedAccent}cc`);
+				root.style.setProperty("--accent-subtle", `${storedAccent}26`);
 			}
 			// Apply locale on load
 			if (locale !== "en") {
@@ -307,6 +327,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 				tasks: [...state.tasks, newTask],
 				newTaskId: id,
 			}));
+			enqueueTaskCreate(id, text?.trim() || "", nowDate).catch(() => {});
 			trackEvent("task_created");
 			showToast(i18n.t("toast.task_added"), "success");
 		} catch (e) {
@@ -321,6 +342,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 			set((state) => ({
 				tasks: state.tasks.map((t) => (t.id === id ? { ...t, text } : t)),
 			}));
+			enqueueTaskUpdate(id, { title: text }).catch(() => {});
 		} catch (e) {
 			console.error("Failed to update task", e);
 			showToast(i18n.t("errors.update_task"));
@@ -365,6 +387,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 			set((state) => ({
 				tasks: state.tasks.filter((t) => t.id !== id),
 			}));
+			enqueueTaskDelete(id).catch(() => {});
 			trackEvent("task_deleted");
 		} catch (e) {
 			console.error("Failed to delete task", e);
@@ -723,8 +746,11 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 		}
 		const root = document.documentElement;
 		root.classList.remove(
-			"theme-midnight", "theme-aurora", "theme-sepia",
-			"theme-evergreen", "theme-monochrome",
+			"theme-midnight",
+			"theme-aurora",
+			"theme-sepia",
+			"theme-evergreen",
+			"theme-monochrome",
 		);
 		root.classList.add(`theme-${preset}`);
 	},

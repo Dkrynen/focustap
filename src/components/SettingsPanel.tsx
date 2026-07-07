@@ -2,12 +2,14 @@ import { getVersion } from "@tauri-apps/api/app";
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { check as checkUpdate } from "@tauri-apps/plugin-updater";
 import {
+	Calendar,
 	Database,
 	Keyboard,
 	KeyRound,
 	Loader2,
 	Monitor,
 	Moon,
+	Plus,
 	RefreshCw,
 	Shield,
 	Sun,
@@ -15,13 +17,14 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import { exportBackup, importBackup } from "../lib/backup";
+import { useCalendarAuthStore } from "../lib/calendar-auth-store";
 import { playChime } from "../lib/sounds";
 import { useTaskStore } from "../store";
 import { LicenseActivation } from "./LicenseActivation";
-import { showToast } from "./Toast";
 import { CloseButton, SlideInPanel, Toggle } from "./primitives";
-import { useFocusTrap } from "../hooks/useFocusTrap";
+import { showToast } from "./Toast";
 
 const FOCUS_RING =
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-primary)]";
@@ -38,6 +41,7 @@ type Tab =
 	| "privacy"
 	| "keybindings"
 	| "theme"
+	| "calendars"
 	| "backup";
 
 function UpdatesTab() {
@@ -99,6 +103,7 @@ function UpdatesTab() {
 			</div>
 
 			<button
+				type="button"
 				onClick={handleCheck}
 				disabled={checking}
 				className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-text-secondary text-xs rounded-[8px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
@@ -124,6 +129,7 @@ function UpdatesTab() {
 						{t("settings.updates.available", { version })}
 					</p>
 					<button
+						type="button"
 						onClick={handleInstall}
 						className={`w-full px-3 py-2 bg-accent-primary/20 hover:bg-accent-primary/30 text-accent-primary text-xs rounded-[8px] transition-colors cursor-pointer ${FOCUS_RING}`}
 					>
@@ -285,6 +291,7 @@ function KeybindingsTab() {
 							{t(labelKey)}
 						</p>
 						<button
+							type="button"
 							onClick={() => {
 								if (isRecording) {
 									setRecording(null);
@@ -307,7 +314,10 @@ function KeybindingsTab() {
 	);
 }
 
-const THEME_PRESETS: { value: "midnight" | "aurora" | "sepia" | "evergreen" | "monochrome"; color: string }[] = [
+const THEME_PRESETS: {
+	value: "midnight" | "aurora" | "sepia" | "evergreen" | "monochrome";
+	color: string;
+}[] = [
 	{ value: "midnight", color: "#8b7eff" },
 	{ value: "aurora", color: "#6366f1" },
 	{ value: "sepia", color: "#d97706" },
@@ -315,7 +325,18 @@ const THEME_PRESETS: { value: "midnight" | "aurora" | "sepia" | "evergreen" | "m
 	{ value: "monochrome", color: "#6b7280" },
 ];
 
-const ACCENT_SWATCHES = ["#8b7eff", "#6366f1", "#ec4899", "#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6", "#06b6d4", "#3b82f6"];
+const ACCENT_SWATCHES = [
+	"#8b7eff",
+	"#6366f1",
+	"#ec4899",
+	"#ef4444",
+	"#f97316",
+	"#eab308",
+	"#22c55e",
+	"#14b8a6",
+	"#06b6d4",
+	"#3b82f6",
+];
 
 function ThemeTab() {
 	const { t } = useTranslation();
@@ -324,30 +345,38 @@ function ThemeTab() {
 	const themePreset = useTaskStore((s) => s.themePreset);
 	const setThemePreset = useTaskStore((s) => s.setThemePreset);
 
-	const modeOptions: { value: "dark" | "light" | "system"; icon: React.ReactNode }[] = [
+	const modeOptions: {
+		value: "dark" | "light" | "system";
+		icon: React.ReactNode;
+	}[] = [
 		{ value: "dark", icon: <Moon size={14} /> },
 		{ value: "light", icon: <Sun size={14} /> },
 		{ value: "system", icon: <Monitor size={14} /> },
 	];
 
-	const [customAccent, setCustomAccent] = useState(() => localStorage.getItem("focustap-accent") || "#8b7eff");
+	const [customAccent, setCustomAccent] = useState(
+		() => localStorage.getItem("focustap-accent") || "#8b7eff",
+	);
 
 	const handleAccentPick = (color: string) => {
 		setCustomAccent(color);
 		const root = document.documentElement;
 		root.style.setProperty("--accent-primary", color);
-		root.style.setProperty("--accent-hover", color + "cc");
-		root.style.setProperty("--accent-subtle", color + "26");
+		root.style.setProperty("--accent-hover", `${color}cc`);
+		root.style.setProperty("--accent-subtle", `${color}26`);
 		localStorage.setItem("focustap-accent", color);
 	};
 
 	return (
 		<div className="space-y-5">
 			<div>
-				<p className="text-sm text-text-primary mb-2">{t("settings.theme.label")}</p>
+				<p className="text-sm text-text-primary mb-2">
+					{t("settings.theme.label")}
+				</p>
 				<div className="flex gap-2">
 					{modeOptions.map((opt) => (
 						<button
+							type="button"
 							key={opt.value}
 							onClick={() => setTheme(opt.value)}
 							className={`flex flex-1 flex-col items-center gap-2 px-3 py-3 rounded-[10px] border transition-colors cursor-pointer ${FOCUS_RING} ${
@@ -367,10 +396,13 @@ function ThemeTab() {
 			</div>
 
 			<div>
-				<p className="text-sm text-text-primary mb-2">{t("settings.theme.preset")}</p>
+				<p className="text-sm text-text-primary mb-2">
+					{t("settings.theme.preset")}
+				</p>
 				<div className="flex gap-2">
 					{THEME_PRESETS.map((preset) => (
 						<button
+							type="button"
 							key={preset.value}
 							onClick={() => setThemePreset(preset.value)}
 							className={`flex flex-1 flex-col items-center gap-2 px-2 py-3 rounded-[10px] border transition-colors cursor-pointer ${FOCUS_RING} ${
@@ -393,10 +425,13 @@ function ThemeTab() {
 			</div>
 
 			<div>
-				<p className="text-sm text-text-primary mb-2">{t("settings.theme.accent")}</p>
+				<p className="text-sm text-text-primary mb-2">
+					{t("settings.theme.accent")}
+				</p>
 				<div className="flex gap-1.5 flex-wrap items-center">
 					{ACCENT_SWATCHES.map((color) => (
 						<button
+							type="button"
 							key={color}
 							onClick={() => handleAccentPick(color)}
 							className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer ${FOCUS_RING} ${
@@ -466,6 +501,7 @@ function BackupTab() {
 			</div>
 
 			<button
+				type="button"
 				onClick={handleExport}
 				className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-text-secondary text-xs rounded-[8px] transition-colors cursor-pointer ${FOCUS_RING}`}
 			>
@@ -477,6 +513,7 @@ function BackupTab() {
 			</p>
 
 			<button
+				type="button"
 				onClick={handleImport}
 				disabled={importing}
 				className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-text-secondary text-xs rounded-[8px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
@@ -491,6 +528,156 @@ function BackupTab() {
 			<p className="text-xs text-text-tertiary -mt-2">
 				{t("settings.backup.import_desc")}
 			</p>
+		</div>
+	);
+}
+
+function CalendarsTab() {
+	const {
+		connectedAccounts,
+		loading,
+		authInProgress,
+		authError,
+		syncInProgress,
+		lastSyncSummary,
+		loadConnectedAccounts,
+		connect,
+		disconnect,
+		pullSyncAll,
+		clearError,
+	} = useCalendarAuthStore();
+
+	useEffect(() => {
+		loadConnectedAccounts();
+	}, [loadConnectedAccounts]);
+
+	return (
+		<div className="space-y-4">
+			{connectedAccounts.length > 0 && (
+				<div className="space-y-2">
+					{connectedAccounts.map((account) => (
+						<div
+							key={`${account.provider}-${account.account_email}`}
+							className="flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] bg-surface-glass"
+						>
+							<div className="flex items-center gap-2 min-w-0">
+								<span
+									className="text-[9px] px-1.5 py-0.5 rounded font-medium flex-shrink-0"
+									style={{
+										color:
+											account.provider === "google" ? "#3b82f6" : "#f97316",
+										backgroundColor:
+											account.provider === "google"
+												? "rgba(59,130,246,0.15)"
+												: "rgba(249,115,22,0.15)",
+									}}
+								>
+									{account.provider === "google" ? "G" : "M"}
+								</span>
+								<span className="text-xs text-text-secondary truncate">
+									{account.account_email}
+								</span>
+							</div>
+							<button
+								type="button"
+								onClick={() =>
+									disconnect(account.provider, account.account_email)
+								}
+								disabled={loading}
+								className={`text-[10px] text-text-tertiary hover:text-red-400 transition-colors cursor-pointer rounded-[6px] px-1.5 py-0.5 flex-shrink-0 ${FOCUS_RING} disabled:opacity-40`}
+							>
+								Disconnect
+							</button>
+						</div>
+					))}
+				</div>
+			)}
+
+			<div className="space-y-2">
+				<button
+					type="button"
+					onClick={() => connect("google")}
+					disabled={authInProgress}
+					className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-text-secondary text-xs rounded-[8px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
+				>
+					{authInProgress ? (
+						<Loader2 size={14} className="animate-spin" />
+					) : (
+						<Plus size={14} />
+					)}
+					Add Google Calendar
+				</button>
+				<button
+					type="button"
+					onClick={() => connect("microsoft")}
+					disabled={authInProgress}
+					className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-text-secondary text-xs rounded-[8px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
+				>
+					{authInProgress ? (
+						<Loader2 size={14} className="animate-spin" />
+					) : (
+						<Plus size={14} />
+					)}
+					Add Microsoft Calendar
+				</button>
+			</div>
+
+			{connectedAccounts.length > 0 && (
+				<button
+					type="button"
+					onClick={() => pullSyncAll()}
+					disabled={syncInProgress}
+					className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-accent-primary/20 hover:bg-accent-primary/30 text-accent-primary text-xs rounded-[8px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
+				>
+					{syncInProgress ? (
+						<Loader2 size={14} className="animate-spin" />
+					) : (
+						<RefreshCw size={14} />
+					)}
+					{syncInProgress ? "Syncingâ€¦" : "Sync now"}
+				</button>
+			)}
+
+			{lastSyncSummary && (
+				<div className="text-[10px] text-text-quaternary space-y-0.5">
+					{lastSyncSummary.totalPulled > 0 && (
+						<p>
+							Imported {lastSyncSummary.totalPulled} event
+							{lastSyncSummary.totalPulled === 1 ? "" : "s"}
+						</p>
+					)}
+					{lastSyncSummary.totalErrors > 0 && (
+						<p className="text-red-400">
+							{lastSyncSummary.totalErrors} error
+							{lastSyncSummary.totalErrors === 1 ? "" : "s"}
+						</p>
+					)}
+					{lastSyncSummary.messages.map((m) => (
+						<p key={m} className="truncate">
+							{m}
+						</p>
+					))}
+				</div>
+			)}
+
+			{authError && (
+				<div className="flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] bg-red-500/10">
+					<p className="text-[10px] text-red-400 flex-1">{authError}</p>
+					<button
+						type="button"
+						onClick={clearError}
+						className={`text-[10px] text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer rounded-[6px] ${FOCUS_RING}`}
+					>
+						Dismiss
+					</button>
+				</div>
+			)}
+
+			{connectedAccounts.length === 0 && !authInProgress && (
+				<p className="text-xs text-text-tertiary/60 italic text-center">
+					Connect a calendar to import events and sync tasks.
+				</p>
+			)}
 		</div>
 	);
 }
@@ -527,13 +714,38 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
 	}, []);
 
 	const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-		{ id: "general", label: t("settings.tabs.general"), icon: <Monitor size={13} /> },
-		{ id: "keybindings", label: t("settings.tabs.keys"), icon: <Keyboard size={13} /> },
+		{
+			id: "general",
+			label: t("settings.tabs.general"),
+			icon: <Monitor size={13} />,
+		},
+		{
+			id: "keybindings",
+			label: t("settings.tabs.keys"),
+			icon: <Keyboard size={13} />,
+		},
 		{ id: "theme", label: t("settings.tabs.theme"), icon: <Sun size={13} /> },
-		{ id: "license", label: t("settings.tabs.license"), icon: <KeyRound size={13} /> },
-		{ id: "updates", label: t("settings.tabs.updates"), icon: <RefreshCw size={13} /> },
-		{ id: "privacy", label: t("settings.tabs.privacy"), icon: <Shield size={13} /> },
-		{ id: "backup", label: t("settings.tabs.backup"), icon: <Database size={13} /> },
+		{
+			id: "license",
+			label: t("settings.tabs.license"),
+			icon: <KeyRound size={13} />,
+		},
+		{
+			id: "updates",
+			label: t("settings.tabs.updates"),
+			icon: <RefreshCw size={13} />,
+		},
+		{
+			id: "privacy",
+			label: t("settings.tabs.privacy"),
+			icon: <Shield size={13} />,
+		},
+		{ id: "calendars", label: "Calendars", icon: <Calendar size={13} /> },
+		{
+			id: "backup",
+			label: t("settings.tabs.backup"),
+			icon: <Database size={13} />,
+		},
 	];
 
 	return (
@@ -546,85 +758,86 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
 				<CloseButton onClick={onClose} ariaLabel={t("common.close")} />
 			</div>
 
-				{/* Tabs */}
-				<div className="flex gap-1 px-5 pb-3 overflow-x-auto">
-					{tabs.map((t) => (
-						<button
-							key={t.id}
-							onClick={() => setTab(t.id)}
-							className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-[6px] transition-colors cursor-pointer whitespace-nowrap ${FOCUS_RING} ${
-								tab === t.id
-									? "bg-accent-primary/15 text-accent-primary"
-									: "text-text-tertiary hover:text-text-secondary hover:bg-white/5"
-							}`}
-						>
-							{t.icon}
-							{t.label}
-						</button>
-					))}
-				</div>
+			{/* Tabs */}
+			<div className="flex gap-1 px-5 pb-3 overflow-x-auto">
+				{tabs.map((t) => (
+					<button
+						type="button"
+						key={t.id}
+						onClick={() => setTab(t.id)}
+						className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-[6px] transition-colors cursor-pointer whitespace-nowrap ${FOCUS_RING} ${
+							tab === t.id
+								? "bg-accent-primary/15 text-accent-primary"
+								: "text-text-tertiary hover:text-text-secondary hover:bg-white/5"
+						}`}
+					>
+						{t.icon}
+						{t.label}
+					</button>
+				))}
+			</div>
 
-				<div className="mx-5 h-px bg-border-subtle" />
+			<div className="mx-5 h-px bg-border-subtle" />
 
-				{/* Content */}
-				<div className="flex-1 px-5 py-4 space-y-5 overflow-y-auto">
-					{tab === "general" && (
-						<>
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-3">
-									<span className="shrink-0">
-										<Monitor size={16} className="text-text-tertiary" />
-									</span>
-									<div>
-										<p className="text-sm text-text-primary">
-											{t("settings.general.launch_at_startup")}
-										</p>
-										<p className="text-xs text-text-tertiary">
-											{t("settings.general.launch_hint")}
-										</p>
-									</div>
-								</div>
-								<Toggle
-									checked={autoStart}
-									onChange={handleAutoStart}
-									label="Auto-start toggle"
-								/>
-							</div>
-
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-3">
-									<span className="shrink-0">
-										<Keyboard size={16} className="text-text-tertiary" />
-									</span>
-									<div>
-										<p className="text-sm text-text-primary">
-											{t("settings.general.keyboard_shortcut")}
-										</p>
-										<p className="text-xs text-text-tertiary">
-											{t("settings.general.shortcut_hint")}
-										</p>
-									</div>
-								</div>
-								<span className="text-xs font-mono bg-white/5 text-text-secondary px-2 py-1 rounded-md border border-border-subtle">
-									{formatBinding(
-										keybindings.toggleWindow || "ctrl+shift+space",
-									)}
+			{/* Content */}
+			<div className="flex-1 px-5 py-4 space-y-5 overflow-y-auto">
+				{tab === "general" && (
+					<>
+						<div className="flex items-center justify-between">
+							<div className="flex items-center gap-3">
+								<span className="shrink-0">
+									<Monitor size={16} className="text-text-tertiary" />
 								</span>
+								<div>
+									<p className="text-sm text-text-primary">
+										{t("settings.general.launch_at_startup")}
+									</p>
+									<p className="text-xs text-text-tertiary">
+										{t("settings.general.launch_hint")}
+									</p>
+								</div>
 							</div>
-						</>
-					)}
+							<Toggle
+								checked={autoStart}
+								onChange={handleAutoStart}
+								label="Auto-start toggle"
+							/>
+						</div>
 
-					{tab === "keybindings" && <KeybindingsTab />}
+						<div className="flex items-center justify-between">
+							<div className="flex items-center gap-3">
+								<span className="shrink-0">
+									<Keyboard size={16} className="text-text-tertiary" />
+								</span>
+								<div>
+									<p className="text-sm text-text-primary">
+										{t("settings.general.keyboard_shortcut")}
+									</p>
+									<p className="text-xs text-text-tertiary">
+										{t("settings.general.shortcut_hint")}
+									</p>
+								</div>
+							</div>
+							<span className="text-xs font-mono bg-white/5 text-text-secondary px-2 py-1 rounded-md border border-border-subtle">
+								{formatBinding(keybindings.toggleWindow || "ctrl+shift+space")}
+							</span>
+						</div>
+					</>
+				)}
 
-					{tab === "theme" && <ThemeTab />}
+				{tab === "keybindings" && <KeybindingsTab />}
 
-					{tab === "license" && <LicenseActivation />}
+				{tab === "theme" && <ThemeTab />}
 
-					{tab === "updates" && <UpdatesTab />}
+				{tab === "license" && <LicenseActivation />}
 
-					{tab === "privacy" && <PrivacyTab />}
+				{tab === "updates" && <UpdatesTab />}
+
+				{tab === "privacy" && <PrivacyTab />}
 
 				{tab === "backup" && <BackupTab />}
+
+				{tab === "calendars" && <CalendarsTab />}
 			</div>
 		</SlideInPanel>
 	);

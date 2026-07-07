@@ -62,6 +62,63 @@ async function initDb(database: Database): Promise<Database> {
 
 	try {
 		await database.execute(
+			`CREATE TABLE IF NOT EXISTS calendar_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        provider TEXT NOT NULL,
+        account_email TEXT NOT NULL,
+        access_token TEXT NOT NULL,
+        refresh_token TEXT,
+        expires_at TEXT,
+        scope TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+        UNIQUE(provider, account_email)
+      )`,
+		);
+	} catch (e) {
+		console.warn("calendar_tokens table creation failed (non-fatal):", e);
+	}
+
+	try {
+		await database.execute(
+			`CREATE TABLE IF NOT EXISTS calendar_event_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        provider TEXT NOT NULL,
+        task_id INTEGER NOT NULL,
+        external_event_id TEXT NOT NULL,
+        calendar_id TEXT,
+        etag TEXT,
+        last_synced_at TEXT,
+        sync_direction TEXT NOT NULL DEFAULT 'bidirectional',
+        created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+        UNIQUE(provider, external_event_id)
+      )`,
+		);
+	} catch (e) {
+		console.warn("calendar_event_links table creation failed (non-fatal):", e);
+	}
+
+	try {
+		await database.execute(
+			`CREATE TABLE IF NOT EXISTS calendar_sync_state (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        provider TEXT NOT NULL,
+        calendar_id TEXT NOT NULL DEFAULT 'primary',
+        sync_token TEXT,
+        delta_link TEXT,
+        last_full_sync TEXT,
+        rate_limit_until TEXT,
+        rate_limit_backoff INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+        UNIQUE(provider, calendar_id)
+      )`,
+		);
+	} catch (e) {
+		console.warn("calendar_sync_state table creation failed (non-fatal):", e);
+	}
+
+	try {
+		await database.execute(
 			"CREATE INDEX IF NOT EXISTS idx_tasks_created ON tasks(date(created_at))",
 		);
 		await database.execute(
@@ -84,6 +141,17 @@ async function initDb(database: Database): Promise<Database> {
 		);
 	} catch (e) {
 		console.warn("Index creation failed (non-fatal):", e);
+	}
+
+	try {
+		await database.execute(
+			"CREATE INDEX IF NOT EXISTS idx_cel_task ON calendar_event_links(task_id)",
+		);
+		await database.execute(
+			"CREATE INDEX IF NOT EXISTS idx_cel_external ON calendar_event_links(provider, external_event_id)",
+		);
+	} catch (e) {
+		console.warn("Calendar index creation failed (non-fatal):", e);
 	}
 
 	return database;
@@ -407,6 +475,48 @@ export interface ActivityLog {
 	timestamp: string;
 }
 
+export type CalendarProvider = "google" | "microsoft";
+export type CalendarSyncDirection =
+	| "bidirectional"
+	| "local_to_remote"
+	| "remote_to_local";
+
+export interface CalendarToken {
+	id: number;
+	provider: CalendarProvider;
+	account_email: string;
+	access_token: string;
+	refresh_token: string | null;
+	expires_at: string | null;
+	scope: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface CalendarEventLink {
+	id: number;
+	provider: CalendarProvider;
+	task_id: number;
+	external_event_id: string;
+	calendar_id: string | null;
+	etag: string | null;
+	last_synced_at: string | null;
+	sync_direction: CalendarSyncDirection;
+	created_at: string;
+}
+
+export interface CalendarSyncState {
+	id: number;
+	provider: CalendarProvider;
+	calendar_id: string;
+	sync_token: string | null;
+	delta_link: string | null;
+	last_full_sync: string | null;
+	rate_limit_until: string | null;
+	rate_limit_backoff: number;
+	updated_at: string;
+}
+
 export async function createTask(
 	text?: string,
 	priority?: number,
@@ -424,6 +534,27 @@ export async function createTask(
 	const id = result.lastInsertId;
 	if (id == null || id === 0) {
 		throw new Error("createTask failed: lastInsertId is missing or 0");
+	}
+	return id;
+}
+
+export async function createPullTask(
+	text: string,
+	taskDate: string,
+	tags: string,
+	priority = 0,
+): Promise<number> {
+	const database = await getDb();
+	const result = await database.execute(
+		`INSERT INTO tasks (text, is_done, sort_order, priority, tags, parent_id, task_date)
+     VALUES ($1, 0,
+       (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM tasks WHERE parent_id IS NULL),
+       $2, $3, NULL, $4)`,
+		[text, priority, tags, taskDate],
+	);
+	const id = result.lastInsertId;
+	if (id == null || id === 0) {
+		throw new Error("createPullTask failed: lastInsertId is missing or 0");
 	}
 	return id;
 }
@@ -985,4 +1116,224 @@ export async function createTimeBlock(
 export async function deleteTimeBlock(id: number): Promise<void> {
 	const database = await getDb();
 	await database.execute("DELETE FROM time_blocks WHERE id = $1", [id]);
+}
+
+/* ── Calendar Tokens CRUD ── */
+
+export async function insertCalendarToken(
+	provider: CalendarProvider,
+	accountEmail: string,
+	accessToken: string,
+	refreshToken: string | null,
+	expiresAt: string | null,
+	scope: string | null,
+): Promise<number> {
+	const database = await getDb();
+	const result = await database.execute(
+		`INSERT INTO calendar_tokens (provider, account_email, access_token, refresh_token, expires_at, scope)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT(provider, account_email) DO UPDATE SET
+       access_token = $3,
+       refresh_token = $4,
+       expires_at = $5,
+       scope = $6,
+       updated_at = datetime('now', 'localtime')`,
+		[provider, accountEmail, accessToken, refreshToken, expiresAt, scope],
+	);
+	const id = result.lastInsertId;
+	if (id == null || id === 0) {
+		throw new Error("insertCalendarToken failed: lastInsertId is missing or 0");
+	}
+	return id;
+}
+
+export async function listCalendarTokens(): Promise<CalendarToken[]> {
+	const database = await getDb();
+	return await database.select<CalendarToken[]>(
+		"SELECT id, provider, account_email, access_token, refresh_token, expires_at, scope, created_at, updated_at FROM calendar_tokens ORDER BY created_at ASC",
+	);
+}
+
+export async function getCalendarToken(
+	provider: CalendarProvider,
+	accountEmail: string,
+): Promise<CalendarToken | null> {
+	const database = await getDb();
+	const rows = await database.select<CalendarToken[]>(
+		"SELECT id, provider, account_email, access_token, refresh_token, expires_at, scope, created_at, updated_at FROM calendar_tokens WHERE provider = $1 AND account_email = $2",
+		[provider, accountEmail],
+	);
+	return rows.length > 0 ? rows[0] : null;
+}
+
+export async function updateCalendarToken(
+	id: number,
+	accessToken: string,
+	refreshToken: string | null,
+	expiresAt: string | null,
+): Promise<void> {
+	const database = await getDb();
+	await database.execute(
+		"UPDATE calendar_tokens SET access_token = $1, refresh_token = $2, expires_at = $3, updated_at = datetime('now', 'localtime') WHERE id = $4",
+		[accessToken, refreshToken, expiresAt, id],
+	);
+}
+
+export async function deleteCalendarToken(
+	provider: CalendarProvider,
+	accountEmail: string,
+): Promise<void> {
+	const database = await getDb();
+	await database.execute(
+		"DELETE FROM calendar_tokens WHERE provider = $1 AND account_email = $2",
+		[provider, accountEmail],
+	);
+}
+
+/* ── Calendar Event Links CRUD ── */
+
+export async function insertCalendarEventLink(
+	provider: CalendarProvider,
+	taskId: number,
+	externalEventId: string,
+	calendarId: string | null,
+	etag: string | null,
+	syncDirection: CalendarSyncDirection,
+): Promise<number> {
+	const database = await getDb();
+	const result = await database.execute(
+		`INSERT INTO calendar_event_links (provider, task_id, external_event_id, calendar_id, etag, sync_direction)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT(provider, external_event_id) DO UPDATE SET
+       task_id = $2,
+       calendar_id = $4,
+       etag = $5,
+       sync_direction = $6`,
+		[provider, taskId, externalEventId, calendarId, etag, syncDirection],
+	);
+	const id = result.lastInsertId;
+	if (id == null || id === 0) {
+		throw new Error(
+			"insertCalendarEventLink failed: lastInsertId is missing or 0",
+		);
+	}
+	return id;
+}
+
+export async function listCalendarEventLinks(): Promise<CalendarEventLink[]> {
+	const database = await getDb();
+	return await database.select<CalendarEventLink[]>(
+		"SELECT id, provider, task_id, external_event_id, calendar_id, etag, last_synced_at, sync_direction, created_at FROM calendar_event_links ORDER BY created_at ASC",
+	);
+}
+
+export async function getCalendarEventLinkByTask(
+	taskId: number,
+): Promise<CalendarEventLink[]> {
+	const database = await getDb();
+	return await database.select<CalendarEventLink[]>(
+		"SELECT id, provider, task_id, external_event_id, calendar_id, etag, last_synced_at, sync_direction, created_at FROM calendar_event_links WHERE task_id = $1",
+		[taskId],
+	);
+}
+
+export async function getCalendarEventLinkByExternal(
+	provider: CalendarProvider,
+	externalEventId: string,
+): Promise<CalendarEventLink | null> {
+	const database = await getDb();
+	const rows = await database.select<CalendarEventLink[]>(
+		"SELECT id, provider, task_id, external_event_id, calendar_id, etag, last_synced_at, sync_direction, created_at FROM calendar_event_links WHERE provider = $1 AND external_event_id = $2",
+		[provider, externalEventId],
+	);
+	return rows.length > 0 ? rows[0] : null;
+}
+
+export async function updateCalendarEventLinkSync(
+	id: number,
+	etag: string | null,
+): Promise<void> {
+	const database = await getDb();
+	await database.execute(
+		"UPDATE calendar_event_links SET etag = $1, last_synced_at = datetime('now', 'localtime') WHERE id = $2",
+		[etag, id],
+	);
+}
+
+export async function deleteCalendarEventLink(id: number): Promise<void> {
+	const database = await getDb();
+	await database.execute("DELETE FROM calendar_event_links WHERE id = $1", [
+		id,
+	]);
+}
+
+export async function deleteCalendarEventLinksByTask(
+	taskId: number,
+): Promise<void> {
+	const database = await getDb();
+	await database.execute(
+		"DELETE FROM calendar_event_links WHERE task_id = $1",
+		[taskId],
+	);
+}
+
+/* ── Calendar Sync State CRUD ── */
+
+export async function upsertCalendarSyncState(
+	provider: CalendarProvider,
+	calendarId: string,
+	syncToken: string | null,
+	deltaLink: string | null,
+	lastFullSync: string | null,
+): Promise<number> {
+	const database = await getDb();
+	const result = await database.execute(
+		`INSERT INTO calendar_sync_state (provider, calendar_id, sync_token, delta_link, last_full_sync)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT(provider, calendar_id) DO UPDATE SET
+       sync_token = $3,
+       delta_link = $4,
+       last_full_sync = $5,
+       updated_at = datetime('now', 'localtime')`,
+		[provider, calendarId, syncToken, deltaLink, lastFullSync],
+	);
+	const id = result.lastInsertId;
+	if (id == null || id === 0) {
+		throw new Error(
+			"upsertCalendarSyncState failed: lastInsertId is missing or 0",
+		);
+	}
+	return id;
+}
+
+export async function getCalendarSyncState(
+	provider: CalendarProvider,
+	calendarId: string,
+): Promise<CalendarSyncState | null> {
+	const database = await getDb();
+	const rows = await database.select<CalendarSyncState[]>(
+		"SELECT id, provider, calendar_id, sync_token, delta_link, last_full_sync, rate_limit_until, rate_limit_backoff, updated_at FROM calendar_sync_state WHERE provider = $1 AND calendar_id = $2",
+		[provider, calendarId],
+	);
+	return rows.length > 0 ? rows[0] : null;
+}
+
+export async function listCalendarSyncStates(): Promise<CalendarSyncState[]> {
+	const database = await getDb();
+	return await database.select<CalendarSyncState[]>(
+		"SELECT id, provider, calendar_id, sync_token, delta_link, last_full_sync, rate_limit_until, rate_limit_backoff, updated_at FROM calendar_sync_state ORDER BY updated_at ASC",
+	);
+}
+
+export async function updateCalendarSyncStateRateLimit(
+	provider: CalendarProvider,
+	calendarId: string,
+	rateLimitUntil: string | null,
+	rateLimitBackoff: number,
+): Promise<void> {
+	const database = await getDb();
+	await database.execute(
+		"UPDATE calendar_sync_state SET rate_limit_until = $1, rate_limit_backoff = $2, updated_at = datetime('now', 'localtime') WHERE provider = $3 AND calendar_id = $4",
+		[rateLimitUntil, rateLimitBackoff, provider, calendarId],
+	);
 }
