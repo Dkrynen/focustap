@@ -22,28 +22,28 @@ const ACCENT_ORANGE = "#f97316";
 
 function taskDotColor(task: Task): string {
 	if (task.is_done) return "var(--status-success)";
-	if (task.tags.includes("google")) return ACCENT_BLUE;
-	if (task.tags.includes("microsoft")) return ACCENT_ORANGE;
+	if (task.tags?.includes("google")) return ACCENT_BLUE;
+	if (task.tags?.includes("microsoft")) return ACCENT_ORANGE;
 	return "var(--accent-primary)";
 }
 
 function taskDotClass(task: Task): string {
 	if (task.is_done) return "bg-status-success";
-	if (task.tags.includes("google")) return "bg-blue-500";
-	if (task.tags.includes("microsoft")) return "bg-orange-500";
+	if (task.tags?.includes("google")) return "bg-blue-500";
+	if (task.tags?.includes("microsoft")) return "bg-orange-500";
 	return "bg-accent-primary";
 }
 
 function taskDotDimClass(task: Task): string {
 	if (task.is_done) return "bg-status-success";
-	if (task.tags.includes("google")) return "bg-blue-500/60";
-	if (task.tags.includes("microsoft")) return "bg-orange-500/60";
+	if (task.tags?.includes("google")) return "bg-blue-500/60";
+	if (task.tags?.includes("microsoft")) return "bg-orange-500/60";
 	return "bg-accent-primary/60";
 }
 
 function providerBadge(task: Task): string | null {
-	if (task.tags.includes("google")) return "G";
-	if (task.tags.includes("microsoft")) return "M";
+	if (task.tags?.includes("google")) return "G";
+	if (task.tags?.includes("microsoft")) return "M";
 	return null;
 }
 
@@ -496,15 +496,15 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 											<span
 												className="text-[8px] px-1 rounded font-medium"
 												style={{
-													color: task.tags.includes("google")
+													color: task.tags?.includes("google")
 														? ACCENT_BLUE
 														: ACCENT_ORANGE,
-													backgroundColor: task.tags.includes("google")
+													backgroundColor: task.tags?.includes("google")
 														? "rgba(59,130,246,0.15)"
 														: "rgba(249,115,22,0.15)",
 												}}
 												title={
-													task.tags.includes("google")
+													task.tags?.includes("google")
 														? "Google Calendar"
 														: "Microsoft Calendar"
 												}

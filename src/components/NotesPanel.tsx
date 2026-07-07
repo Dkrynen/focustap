@@ -156,7 +156,7 @@ export function NotesPanel({ open, onClose }: NotesPanelProps) {
 										: t("notes.empty_content")}
 								</div>
 								<div className="text-[10px] text-text-quaternary mt-0.5">
-									{note.updated_at.slice(0, 10)}
+									{note.updated_at?.slice(0, 10) ?? ""}
 								</div>
 							</button>
 						))}

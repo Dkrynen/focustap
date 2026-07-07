@@ -425,7 +425,7 @@ function TaskDetailRow({
 			{/* Dates & actions */}
 			<div className="flex items-center justify-between pt-1">
 				<div className="text-[10px] text-text-quaternary">
-					{t("task.detail.created")} {task.created_at.slice(0, 10)}
+					{t("task.detail.created")} {task.created_at?.slice(0, 10) ?? ""}
 					{task.completed_at && (
 						<>
 							{" "}
