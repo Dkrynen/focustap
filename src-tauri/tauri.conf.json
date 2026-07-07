@@ -14,13 +14,13 @@
 			{
 				"title": "FocusTap",
 				"label": "main",
-				"width": 420,
+				"width": 480,
 				"height": 560,
 				"decorations": true,
 				"visible": true,
 				"center": true,
 				"resizable": true,
-				"minWidth": 380,
+				"minWidth": 420,
 				"minHeight": 400
 			}
 		],

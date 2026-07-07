@@ -195,7 +195,7 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 			open={open}
 			onClose={onClose}
 			ariaLabel={t("calendar.title")}
-			className="w-[340px] max-w-[90vw]"
+			className="w-[460px] max-w-[94vw]"
 		>
 			{/* Header */}
 			<div className="flex items-center justify-between px-5 pt-4 pb-3">
@@ -315,7 +315,7 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 						{DAY_NAMES.map((dn) => (
 							<div
 								key={dn}
-								className="bg-surface-deep text-[9px] text-text-tertiary text-center py-1 uppercase tracking-wide"
+								className="bg-surface-deep text-[10px] text-text-tertiary text-center py-1 uppercase tracking-wide"
 							>
 								{dn}
 							</div>
@@ -337,7 +337,7 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 											setSelectedDay(dateStr);
 										}
 									}}
-									className={`bg-surface-primary min-h-[76px] p-1.5 cursor-pointer transition-colors
+									className={`bg-surface-primary min-h-[88px] p-1.5 cursor-pointer transition-colors
                       ${isToday ? "ring-1 ring-accent-primary/30" : ""}
                       ${selectedDay === dateStr ? "bg-accent-primary/10" : "hover:bg-surface-glass"}`}
 								>
@@ -350,17 +350,17 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 										{dayTasks.slice(0, 4).map((task) => (
 											<div key={task.id} className="flex items-center gap-0.5">
 												<span
-													className={`w-1 h-1 rounded-full flex-shrink-0 ${taskDotClass(task)}`}
+													className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${taskDotClass(task)}`}
 												/>
 												<span
-													className={`text-[8px] truncate ${task.is_done ? "text-text-tertiary line-through" : "text-text-secondary"}`}
+													className={`text-[10px] truncate ${task.is_done ? "text-text-tertiary line-through" : "text-text-secondary"}`}
 												>
 													{task.text || "..."}
 												</span>
 											</div>
 										))}
 										{dayTasks.length > 3 && (
-											<span className="text-[8px] text-text-tertiary">
+											<span className="text-[10px] text-text-tertiary">
 												+{dayTasks.length - 3} {t("calendar.more")}
 											</span>
 										)}
@@ -377,7 +377,7 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 						{DAY_NAMES.map((dn) => (
 							<div
 								key={dn}
-								className="bg-surface-deep text-[9px] text-text-tertiary text-center py-1 uppercase tracking-wide"
+								className="bg-surface-deep text-[10px] text-text-tertiary text-center py-1 uppercase tracking-wide"
 							>
 								{dn}
 							</div>
@@ -402,13 +402,13 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 												setSelectedDay(dateStr);
 											}
 										}}
-										className={`min-h-[32px] p-0.5 cursor-pointer transition-colors
+										className={`min-h-[36px] p-0.5 cursor-pointer transition-colors
                       ${isCurrentMonth ? "bg-surface-primary" : "bg-surface-deep"}
                       ${isToday ? "ring-1 ring-accent-primary/30" : ""}
                       ${selectedDay === dateStr ? "bg-accent-primary/10" : "hover:bg-surface-glass"}`}
 									>
 										<span
-											className={`text-[9px] ${isToday ? "text-accent-primary font-medium" : isCurrentMonth ? "text-text-tertiary" : "text-text-quaternary"}`}
+											className={`text-[10px] ${isToday ? "text-accent-primary font-medium" : isCurrentMonth ? "text-text-tertiary" : "text-text-quaternary"}`}
 										>
 											{d.getDate()}
 										</span>
@@ -417,7 +417,7 @@ export function CalendarView({ open, onClose }: CalendarViewProps) {
 												{dayTasks.slice(0, 4).map((task) => (
 													<span
 														key={task.id}
-														className={`w-[5px] h-[5px] rounded-full ${taskDotDimClass(task)}`}
+														className={`w-[6px] h-[6px] rounded-full ${taskDotDimClass(task)}`}
 													/>
 												))}
 											</div>
