@@ -403,7 +403,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 			trackEvent("task_deleted");
 		} catch (e) {
 			console.error("Failed to delete task", e);
-			showToast("Could not delete task");
+			showToast(i18n.t("errors.delete_task"));
 		}
 	},
 
