@@ -26,6 +26,8 @@ import {
 	updateTaskText,
 	upsertCalendarSyncState,
 } from "./db";
+import { getCurrentUser } from "./supabase";
+import { enqueueCalendarLinkDelete, enqueueCalendarLinkUpsert } from "./sync";
 
 export interface SyncResult {
 	provider: CalendarProvider;
@@ -358,6 +360,13 @@ export async function calendarSyncFlush(): Promise<{
 					created.etag,
 					"bidirectional",
 				);
+				syncLinkToSupabase(
+					op.provider,
+					created.externalId,
+					op.calendarId,
+					created.etag,
+					op.taskId,
+				);
 			} else if (op.type === "cal_event_update") {
 				if (!op.externalId || op.linkId === null) {
 					throw new Error("missing externalId or linkId for update");
@@ -397,6 +406,7 @@ export async function calendarSyncFlush(): Promise<{
 				if (op.linkId !== null) {
 					await deleteCalendarEventLink(op.linkId);
 				}
+				enqueueCalendarLinkDelete(op.provider, op.externalId);
 			}
 			flushed++;
 		} catch (_e) {
@@ -421,6 +431,30 @@ export async function calendarSyncFlush(): Promise<{
 
 function defaultCalendarId(provider: CalendarProvider): string {
 	return provider === "google" ? "primary" : "AAAAA==";
+}
+
+async function syncLinkToSupabase(
+	provider: CalendarProvider,
+	externalEventId: string,
+	calendarId: string,
+	etag: string | null,
+	localTaskId: number,
+): Promise<void> {
+	try {
+		const user = await getCurrentUser();
+		if (!user) return;
+		enqueueCalendarLinkUpsert({
+			user_id: user.id,
+			provider,
+			external_event_id: externalEventId,
+			calendar_id: calendarId,
+			etag,
+			local_task_id: localTaskId,
+			sync_direction: "bidirectional",
+		});
+	} catch {
+		// Supabase not configured — local-only mode, skip cross-device sync
+	}
 }
 
 function taskDateToEventRange(taskDate: string): {

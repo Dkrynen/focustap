@@ -7,7 +7,13 @@ type TeamTaskUpdate = Database["public"]["Tables"]["team_tasks"]["Update"];
 
 interface PendingOp {
 	id: string;
-	type: "task_insert" | "task_update" | "task_delete" | "comment_insert";
+	type:
+		| "task_insert"
+		| "task_update"
+		| "task_delete"
+		| "comment_insert"
+		| "cal_link_upsert"
+		| "cal_link_delete";
 	payload: Record<string, unknown>;
 	created_at: string;
 	retries: number;
@@ -47,6 +53,41 @@ export function enqueueOp(
 
 export function getQueueLength(): number {
 	return loadQueue().length;
+}
+
+export function enqueueCalendarLinkUpsert(
+	link: Database["public"]["Tables"]["calendar_event_links"]["Insert"],
+): void {
+	enqueueOp({
+		type: "cal_link_upsert",
+		payload: link as unknown as Record<string, unknown>,
+	});
+}
+
+export function enqueueCalendarLinkDelete(
+	provider: string,
+	externalEventId: string,
+): void {
+	enqueueOp({
+		type: "cal_link_delete",
+		payload: { provider, external_event_id: externalEventId },
+	});
+}
+
+export async function pullCalendarEventLinks(
+	userId: string,
+): Promise<Database["public"]["Tables"]["calendar_event_links"]["Row"][]> {
+	try {
+		const supabase = getSupabase();
+		const { data, error } = await supabase
+			.from("calendar_event_links")
+			.select("*")
+			.eq("user_id", userId);
+		if (error) throw error;
+		return data;
+	} catch {
+		return [];
+	}
 }
 
 export async function flushQueue(): Promise<{
@@ -99,6 +140,30 @@ export async function flushQueue(): Promise<{
 						.insert(
 							op.payload as unknown as Database["public"]["Tables"]["task_comments"]["Insert"],
 						);
+					if (error) throw error;
+					break;
+				}
+				case "cal_link_upsert": {
+					const linkPayload =
+						op.payload as unknown as Database["public"]["Tables"]["calendar_event_links"]["Insert"];
+					const { error } = await supabase
+						.from("calendar_event_links")
+						.upsert(linkPayload, {
+							onConflict: "provider,external_event_id,user_id",
+						});
+					if (error) throw error;
+					break;
+				}
+				case "cal_link_delete": {
+					const delPayload = op.payload as unknown as {
+						provider: string;
+						external_event_id: string;
+					};
+					const { error } = await supabase
+						.from("calendar_event_links")
+						.delete()
+						.eq("provider", delPayload.provider)
+						.eq("external_event_id", delPayload.external_event_id);
 					if (error) throw error;
 					break;
 				}

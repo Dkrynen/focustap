@@ -37,6 +37,12 @@ export interface Database {
 				Update: WorkspaceInviteUpdate;
 				Relationships: [];
 			};
+			calendar_event_links: {
+				Row: CalendarEventLinkRow;
+				Insert: CalendarEventLinkInsert;
+				Update: CalendarEventLinkUpdate;
+				Relationships: [];
+			};
 		};
 		Views: Record<string, never>;
 		Functions: Record<string, never>;
@@ -217,4 +223,45 @@ export interface WorkspaceInviteInsert {
 export interface WorkspaceInviteUpdate {
 	role?: "owner" | "admin" | "member";
 	status?: "pending" | "accepted" | "declined" | "expired";
+}
+
+/* ── Calendar Event Links (cross-device sync) ── */
+
+export interface CalendarEventLinkRow {
+	id: string;
+	user_id: string;
+	workspace_id: string | null;
+	team_task_id: string | null;
+	local_task_id: number | null;
+	provider: "google" | "microsoft";
+	external_event_id: string;
+	calendar_id: string | null;
+	etag: string | null;
+	last_synced_at: string | null;
+	sync_direction: "bidirectional" | "local_to_remote" | "remote_to_local";
+	created_at: string;
+	updated_at: string;
+}
+
+export interface CalendarEventLinkInsert {
+	id?: string;
+	user_id: string;
+	workspace_id?: string | null;
+	team_task_id?: string | null;
+	local_task_id?: number | null;
+	provider: "google" | "microsoft";
+	external_event_id: string;
+	calendar_id?: string | null;
+	etag?: string | null;
+	last_synced_at?: string | null;
+	sync_direction?: "bidirectional" | "local_to_remote" | "remote_to_local";
+}
+
+export interface CalendarEventLinkUpdate {
+	team_task_id?: string | null;
+	local_task_id?: number | null;
+	calendar_id?: string | null;
+	etag?: string | null;
+	last_synced_at?: string | null;
+	sync_direction?: "bidirectional" | "local_to_remote" | "remote_to_local";
 }
