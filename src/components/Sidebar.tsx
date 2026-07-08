@@ -40,7 +40,7 @@ export function Sidebar({
 	const activeWs = workspaces.find((w) => w.id === activeWorkspaceId);
 
 	return (
-		<div className="w-[200px] flex-shrink-0 h-full flex flex-col bg-surface-deep border-r border-border-subtle select-none">
+		<div className="w-[240px] flex-shrink-0 h-full flex flex-col bg-surface-deep border-r border-border-subtle select-none">
 			{/* Workspace header */}
 			<div className="relative px-3 pt-4 pb-2">
 				<button
@@ -101,7 +101,9 @@ export function Sidebar({
 						>
 							<Icon
 								size={16}
-								className={isActive ? "text-accent-primary" : "text-text-quaternary"}
+								className={
+									isActive ? "text-accent-primary" : "text-text-quaternary"
+								}
 							/>
 							<span>{item.label}</span>
 						</button>

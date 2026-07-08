@@ -314,7 +314,7 @@ function App() {
 			{/* Main area */}
 			<div className="flex-1 flex flex-col min-w-0">
 				{/* Top bar */}
-				<div className="flex items-center gap-2 px-4 pt-3 pb-2 select-none">
+				<div className="flex items-center gap-2 px-6 pt-4 pb-3 select-none">
 					{activeView === "today" || activeView === "inbox" ? (
 						<>
 							<span className="text-xs font-medium text-text-quaternary uppercase tracking-wider">
@@ -530,7 +530,7 @@ function App() {
 
 				{/* Search bar (expandable) */}
 				{searchOpen && (
-					<div className="px-4 pb-2">
+					<div className="px-6 pb-2">
 						<TaskSearch
 							inputRef={searchRef as React.RefObject<HTMLInputElement | null>}
 							onSearchActive={() => {}}
@@ -539,12 +539,12 @@ function App() {
 				)}
 
 				{/* Pomodoro timer — always visible */}
-				<div className="px-4 pb-2">
+				<div className="px-6 pb-3">
 					<PomodoroTimer />
 				</div>
 
 				{/* Active view */}
-				<div className="flex flex-col flex-1 px-4 pb-4 min-h-0 gap-2">
+				<div className="flex flex-col flex-1 px-6 pb-6 min-h-0 gap-3">
 					{(activeView === "today" || activeView === "inbox") && (
 						<>
 							{!searchOpen && <TaskInput />}
