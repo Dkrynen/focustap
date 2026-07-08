@@ -126,7 +126,17 @@
 			"preset_aurora": "Aurora",
 			"preset_sepia": "Sepia",
 			"preset_evergreen": "Evergreen",
-			"preset_monochrome": "Monochrome"
+			"preset_monochrome": "Monochrome",
+			"preview": "Preview",
+			"sample_title": "Task Title",
+			"sample_body": "A sample task description showing how the current theme renders text, surfaces, and accents across UI elements.",
+			"sample_tag_active": "Active",
+			"sample_tag_pending": "Pending",
+			"sample_tag_done": "Done",
+			"sample_input": "Type a task...",
+			"sample_button": "Save Task",
+			"sample_cancel": "Cancel",
+			"sample_more": "More"
 		},
 		"language": {
 			"label": "Language",

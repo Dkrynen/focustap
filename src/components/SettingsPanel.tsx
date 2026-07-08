@@ -106,7 +106,7 @@ function UpdatesTab() {
 				type="button"
 				onClick={handleCheck}
 				disabled={checking}
-				className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-text-secondary text-xs rounded-[8px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
+				className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-surface-glass hover:bg-surface-elevated text-text-secondary text-xs rounded-[6px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
 			>
 				{checking ? (
 					<Loader2 size={14} className="animate-spin" />
@@ -302,7 +302,7 @@ function KeybindingsTab() {
 							className={`relative text-xs font-mono px-2 py-1 rounded-[6px] border transition-colors cursor-pointer min-w-[80px] text-center ${FOCUS_RING} ${
 								isRecording
 									? "border-accent-primary bg-accent-primary/10 text-accent-primary animate-pulse"
-									: "border-border-subtle bg-white/5 text-text-secondary hover:border-accent-primary/40"
+									: "border-border-subtle bg-surface-glass text-text-secondary hover:border-accent-primary/40"
 							}`}
 						>
 							{isRecording ? "\u25CF  Press key..." : formatBinding(binding)}
@@ -382,7 +382,7 @@ function ThemeTab() {
 							className={`flex flex-1 flex-col items-center gap-2 px-3 py-3 rounded-[10px] border transition-colors cursor-pointer ${FOCUS_RING} ${
 								theme === opt.value
 									? "border-accent-primary bg-accent-primary/10 text-accent-primary"
-									: "border-border-default bg-white/5 text-text-tertiary hover:border-accent-primary/40 hover:text-text-secondary"
+									: "border-border-default bg-surface-glass text-text-tertiary hover:border-accent-primary/40 hover:text-text-secondary"
 							}`}
 							title={t(`settings.theme.${opt.value}_description`)}
 						>
@@ -408,7 +408,7 @@ function ThemeTab() {
 							className={`flex flex-1 flex-col items-center gap-2 px-2 py-3 rounded-[10px] border transition-colors cursor-pointer ${FOCUS_RING} ${
 								themePreset === preset.value
 									? "border-accent-primary bg-accent-primary/10 text-accent-primary"
-									: "border-border-default bg-white/5 text-text-tertiary hover:border-accent-primary/40 hover:text-text-secondary"
+									: "border-border-default bg-surface-glass text-text-tertiary hover:border-accent-primary/40 hover:text-text-secondary"
 							}`}
 							title={t(`settings.theme.preset_${preset.value}`)}
 						>
@@ -450,6 +450,76 @@ function ThemeTab() {
 						className={`w-7 h-7 rounded-full border-2 border-border-default cursor-pointer bg-transparent ${FOCUS_RING}`}
 						aria-label={t("settings.theme.custom_accent")}
 					/>
+				</div>
+			</div>
+
+			{/* Theme preview card */}
+			<div>
+				<p className="text-sm text-text-primary mb-2">
+					{t("settings.theme.preview")}
+				</p>
+				<div className="rounded-[10px] border border-border-default overflow-hidden bg-surface-glass">
+					<div className="p-3 space-y-2.5">
+						{/* Sample text */}
+						<div className="space-y-0.5">
+							<p className="text-xs font-medium text-text-primary">
+								{t("settings.theme.sample_title")}
+							</p>
+							<p className="text-[11px] text-text-tertiary leading-relaxed">
+								{t("settings.theme.sample_body")}
+							</p>
+						</div>
+						{/* Sample badge row */}
+						<div className="flex gap-1.5">
+							<span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent-subtle text-accent-primary font-medium">
+								{t("settings.theme.sample_tag_active")}
+							</span>
+							<span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-glass-edge text-text-tertiary font-medium">
+								{t("settings.theme.sample_tag_pending")}
+							</span>
+							<span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-glass-edge text-text-tertiary font-medium">
+								{t("settings.theme.sample_tag_done")}
+							</span>
+						</div>
+						{/* Sample input */}
+						<div className="relative">
+							<input
+								type="text"
+								readOnly
+								value={t("settings.theme.sample_input")}
+								className="w-full bg-input-bg text-text-primary text-xs px-2.5 py-1.5 rounded-[6px] border border-border-default font-sans pointer-events-none"
+								tabIndex={-1}
+							/>
+							<span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-input-placeholder">
+								Ctrl+K
+							</span>
+						</div>
+						{/* Sample button */}
+						<button
+							type="button"
+							className="w-full py-1.5 rounded-[6px] bg-accent-primary text-white text-xs font-medium cursor-default"
+							tabIndex={-1}
+						>
+							{t("settings.theme.sample_button")}
+						</button>
+						{/* Sample secondary button */}
+						<div className="flex gap-1.5">
+							<button
+								type="button"
+								className="flex-1 py-1.5 rounded-[6px] bg-surface-glass-edge text-text-secondary text-xs font-medium cursor-default"
+								tabIndex={-1}
+							>
+								{t("settings.theme.sample_cancel")}
+							</button>
+							<button
+								type="button"
+								className="flex-1 py-1.5 rounded-[6px] border border-border-default text-text-secondary text-xs font-medium cursor-default"
+								tabIndex={-1}
+							>
+								{t("settings.theme.sample_more")}
+							</button>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -503,7 +573,7 @@ function BackupTab() {
 			<button
 				type="button"
 				onClick={handleExport}
-				className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-text-secondary text-xs rounded-[8px] transition-colors cursor-pointer ${FOCUS_RING}`}
+				className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-surface-glass hover:bg-surface-elevated text-text-secondary text-xs rounded-[6px] transition-colors cursor-pointer ${FOCUS_RING}`}
 			>
 				<Database size={14} />
 				{t("settings.backup.export")}
@@ -516,7 +586,7 @@ function BackupTab() {
 				type="button"
 				onClick={handleImport}
 				disabled={importing}
-				className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-text-secondary text-xs rounded-[8px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
+				className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-surface-glass hover:bg-surface-elevated text-text-secondary text-xs rounded-[6px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
 			>
 				{importing ? (
 					<Loader2 size={14} className="animate-spin" />
@@ -598,7 +668,7 @@ function CalendarsTab() {
 					type="button"
 					onClick={() => connect("google")}
 					disabled={authInProgress}
-					className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-text-secondary text-xs rounded-[8px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
+					className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-surface-glass hover:bg-surface-elevated text-text-secondary text-xs rounded-[6px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
 				>
 					{authInProgress ? (
 						<Loader2 size={14} className="animate-spin" />
@@ -611,7 +681,7 @@ function CalendarsTab() {
 					type="button"
 					onClick={() => connect("microsoft")}
 					disabled={authInProgress}
-					className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-text-secondary text-xs rounded-[8px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
+					className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-surface-glass hover:bg-surface-elevated text-text-secondary text-xs rounded-[6px] transition-colors cursor-pointer disabled:opacity-40 ${FOCUS_RING}`}
 				>
 					{authInProgress ? (
 						<Loader2 size={14} className="animate-spin" />
@@ -749,7 +819,16 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
 	];
 
 	return (
-		<SlideInPanel open={open} onClose={onClose} ariaLabel={t("settings.title")}>
+		<SlideInPanel
+			open={open}
+			onClose={onClose}
+			ariaLabel={t("settings.title")}
+			className="w-[480px] max-w-[92vw]"
+			resizable
+			defaultWidth={480}
+			minWidth={320}
+			maxWidth={800}
+		>
 			{/* Header */}
 			<div className="flex items-center justify-between px-5 pt-4 pb-3">
 				<h2 className="text-sm font-medium text-text-primary">
@@ -768,7 +847,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
 						className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-[6px] transition-colors cursor-pointer whitespace-nowrap ${FOCUS_RING} ${
 							tab === t.id
 								? "bg-accent-primary/15 text-accent-primary"
-								: "text-text-tertiary hover:text-text-secondary hover:bg-white/5"
+								: "text-text-tertiary hover:text-text-secondary hover:bg-surface-glass"
 						}`}
 					>
 						{t.icon}
@@ -818,7 +897,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
 									</p>
 								</div>
 							</div>
-							<span className="text-xs font-mono bg-white/5 text-text-secondary px-2 py-1 rounded-md border border-border-subtle">
+							<span className="text-xs font-mono bg-surface-glass text-text-secondary px-2 py-1 rounded-md border border-border-subtle">
 								{formatBinding(keybindings.toggleWindow || "ctrl+shift+space")}
 							</span>
 						</div>

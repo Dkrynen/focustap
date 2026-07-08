@@ -30,7 +30,8 @@
 
 	--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 	--radius: 0.75rem;
-	--shadow-glow: 0 0 80px -10px color-mix(in srgb, var(--accent-primary) 50%, transparent);
+	--shadow-glow: 0 0 80px -10px
+		color-mix(in srgb, var(--accent-primary) 50%, transparent);
 	--shadow-elevated: 0 20px 60px -20px rgba(0, 0, 0, 0.8);
 }
 
@@ -327,4 +328,26 @@ body {
 
 .animate-slide-in {
 	animation: slideIn 0.15s ease-out;
+}
+
+.animate-glow-pulse {
+	animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.4;
+	}
+}
+
+.bg-accent-glow {
+	background: radial-gradient(
+		ellipse at 50% 0%,
+		color-mix(in srgb, var(--accent-primary) 8%, transparent) 0%,
+		transparent 70%
+	);
 }
