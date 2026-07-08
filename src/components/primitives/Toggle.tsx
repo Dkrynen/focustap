@@ -16,7 +16,7 @@ export function Toggle({ checked, onChange, label }: ToggleProps) {
                   transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2
                   focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-2
                   focus-visible:ring-offset-[var(--surface-primary)]
-                  ${checked ? "bg-accent-primary" : "bg-white/10"}`}
+                  ${checked ? "bg-accent-primary" : "bg-surface-glass"}`}
 		>
 			<span
 				className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm

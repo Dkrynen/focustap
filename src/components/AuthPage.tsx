@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../lib/auth-store";
 
+const FOCUS_RING =
+	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-primary)]";
+
 export function AuthPage() {
 	const { t } = useTranslation();
 	const { login, loading, error, clearError } = useAuthStore();
@@ -37,7 +40,7 @@ export function AuthPage() {
 					<button
 						type="button"
 						onClick={() => setSent(false)}
-						className="text-xs text-accent-primary hover:underline cursor-pointer"
+						className={`text-xs text-accent-primary hover:underline cursor-pointer rounded-[4px] ${FOCUS_RING}`}
 					>
 						{t("auth.use_different_email")}
 					</button>
@@ -82,7 +85,7 @@ export function AuthPage() {
 							placeholder={t("auth.email_placeholder")}
 							required
 							disabled={loading}
-							className="w-full h-10 pl-9 pr-3 text-sm bg-surface-deep border border-border-subtle rounded-[6px] text-text-primary placeholder:text-text-quaternary outline-none focus:border-accent-primary transition-colors disabled:opacity-50"
+							className={`w-full h-10 pl-9 pr-3 text-sm bg-surface-deep border border-border-subtle rounded-[6px] text-text-primary placeholder:text-text-quaternary transition-colors disabled:opacity-50 ${FOCUS_RING}`}
 						/>
 					</div>
 
@@ -91,7 +94,7 @@ export function AuthPage() {
 					<button
 						type="submit"
 						disabled={loading || !email.trim()}
-						className="h-10 flex items-center justify-center gap-2 text-sm font-medium bg-accent-primary text-white rounded-[6px] hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+						className={`h-10 flex items-center justify-center gap-2 text-sm font-medium bg-accent-primary text-white rounded-[6px] hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${FOCUS_RING}`}
 					>
 						{loading && <Loader2 size={14} className="animate-spin" />}
 						{t("auth.send_magic_link")}

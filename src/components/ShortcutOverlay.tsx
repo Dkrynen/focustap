@@ -37,14 +37,22 @@ export function ShortcutOverlay({ open, onClose }: ShortcutOverlayProps) {
 		},
 		{
 			title: t("shortcuts.group_timer"),
-			shortcuts: [{ keys: "Ctrl+Shift+P", desc: t("shortcuts.start_pause_timer") }],
+			shortcuts: [
+				{ keys: "Ctrl+Shift+P", desc: t("shortcuts.start_pause_timer") },
+			],
 		},
 	];
 
 	if (!open) return null;
 
 	return (
-		<SlideInPanel open={open} onClose={onClose} ariaLabel={t("shortcuts.title")} centered zIndex="z-[60]">
+		<SlideInPanel
+			open={open}
+			onClose={onClose}
+			ariaLabel={t("shortcuts.title")}
+			centered
+			zIndex="z-[60]"
+		>
 			{/* Header */}
 			<div className="flex items-center justify-between px-5 pt-4 pb-3">
 				<h2 className="text-sm font-medium text-text-primary">
@@ -68,7 +76,7 @@ export function ShortcutOverlay({ open, onClose }: ShortcutOverlayProps) {
 									className="flex items-center justify-between"
 								>
 									<span className="text-xs text-text-primary">{sc.desc}</span>
-									<span className="text-[11px] font-mono bg-white/5 text-text-secondary px-2 py-0.5 rounded-[6px] border border-border-subtle whitespace-nowrap ml-3">
+									<span className="text-[11px] font-mono bg-surface-glass text-text-secondary px-2 py-0.5 rounded-[6px] border border-border-subtle whitespace-nowrap ml-3">
 										{sc.keys}
 									</span>
 								</div>

@@ -59,6 +59,7 @@ export function LicenseActivation() {
 					{planKey && <p>Plan: {planKey}</p>}
 				</div>
 				<button
+					type="button"
 					onClick={handleDeactivate}
 					className={`text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer ${FOCUS_RING} rounded-[6px] px-1 py-0.5`}
 				>
@@ -82,11 +83,12 @@ export function LicenseActivation() {
 					onKeyDown={(e) => e.key === "Enter" && handleActivate()}
 					placeholder={t("license.key_placeholder", "XXXX-XXXX-XXXX-XXXX")}
 					disabled={status === "loading"}
-					className={`flex-1 bg-white/5 border border-border-subtle rounded-[6px] px-3 py-2 text-xs text-text-primary placeholder:text-text-quaternary focus:border-accent-primary/50 transition-colors
+					className={`flex-1 bg-surface-glass border border-border-subtle rounded-[6px] px-3 py-2 text-xs text-text-primary placeholder:text-text-quaternary focus:border-accent-primary/50 transition-colors
 					   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]
 					   focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-primary)]`}
 				/>
 				<button
+					type="button"
 					onClick={handleActivate}
 					disabled={status === "loading" || !keyInput.trim()}
 					className={`px-3 py-2 bg-accent-primary/20 hover:bg-accent-primary/30 text-accent-primary text-xs rounded-[6px] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${FOCUS_RING}`}
