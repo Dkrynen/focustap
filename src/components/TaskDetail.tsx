@@ -157,7 +157,11 @@ export function TaskDetail() {
 			open={true}
 			onClose={handleClose}
 			ariaLabel={t("task.detail.title")}
-			className="w-[300px] max-w-[90vw]"
+			className="w-[380px] max-w-[90vw]"
+			resizable
+			defaultWidth={380}
+			minWidth={280}
+			maxWidth={700}
 		>
 			{/* Header */}
 			<div className="flex items-center justify-between px-5 pt-4 pb-3">
@@ -194,7 +198,7 @@ export function TaskDetail() {
 				{/* Priority */}
 				<div>
 					<span className="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-1.5 block">
-						Priority
+						{t("task.detail.priority_label")}
 					</span>
 					<div className="flex gap-1.5">
 						{PRIORITY_OPTIONS(t).map((opt) => (
@@ -472,7 +476,7 @@ export function TaskDetail() {
 										editTaskDate,
 									).catch(() => {});
 								}}
-								className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-text-secondary text-xs rounded-[6px] transition-colors cursor-pointer ${FOCUS_RING}`}
+								className={`w-full flex items-center justify-center gap-2 px-3 py-2 bg-surface-glass hover:bg-surface-elevated text-text-secondary text-xs rounded-[6px] transition-colors cursor-pointer ${FOCUS_RING}`}
 							>
 								<CalendarIcon size={12} /> Create calendar event
 							</button>
@@ -511,7 +515,7 @@ export function TaskDetail() {
 						await save();
 						setSelectedTaskId(null);
 					}}
-					className={`w-full py-2 rounded-[8px] bg-accent-primary text-white text-xs font-medium
+					className={`w-full py-2 rounded-[6px] bg-accent-primary text-white text-xs font-medium
                        hover:bg-accent-hover transition-colors cursor-pointer ${FOCUS_RING}`}
 				>
 					{t("common.done")}

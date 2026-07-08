@@ -96,7 +96,16 @@ export function FocusAnalytics({ open, onClose }: FocusAnalyticsProps) {
 	if (!open) return null;
 
 	return (
-		<SlideInPanel open={open} onClose={onClose} ariaLabel={t("focus.title")} className="w-[300px] max-w-[85vw]">
+		<SlideInPanel
+			open={open}
+			onClose={onClose}
+			ariaLabel={t("focus.title")}
+			className="w-[440px] max-w-[92vw]"
+			resizable
+			defaultWidth={440}
+			minWidth={300}
+			maxWidth={800}
+		>
 			{/* Header */}
 			<div className="flex items-center justify-between px-5 pt-4 pb-3">
 				<h2 className="text-sm font-medium text-text-primary">
@@ -106,86 +115,84 @@ export function FocusAnalytics({ open, onClose }: FocusAnalyticsProps) {
 			</div>
 			<div className="mx-5 h-px bg-border-subtle" />
 
-				<div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-					{/* KPI Grid */}
-					<div className="grid grid-cols-2 gap-2">
-						<div className="bg-surface-glass rounded-[8px] p-3">
-							<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
-								<Clock size={11} /> {t("focus.best_hour")}
-							</div>
-							<div className="text-base font-medium text-text-primary">
-								{bestHour}
-							</div>
+			<div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+				{/* KPI Grid */}
+				<div className="grid grid-cols-2 gap-2">
+					<div className="bg-surface-glass rounded-[8px] p-3">
+						<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
+							<Clock size={11} /> {t("focus.best_hour")}
 						</div>
-						<div className="bg-surface-glass rounded-[8px] p-3">
-							<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
-								<TrendingUp size={11} /> {t("focus.best_day")}
-							</div>
-							<div className="text-base font-medium text-text-primary">
-								{bestDay}
-							</div>
-						</div>
-						<div className="bg-surface-glass rounded-[8px] p-3">
-							<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
-								{t("focus.consistency_label")}
-							</div>
-							<div className="text-base font-medium text-text-primary">
-								{consistency}%
-							</div>
-						</div>
-						<div className="bg-surface-glass rounded-[8px] p-3">
-							<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
-								{t("focus.avg_daily_label")}
-							</div>
-							<div className="text-base font-medium text-text-primary">
-								{avgDaily}
-							</div>
+						<div className="text-base font-medium text-text-primary">
+							{bestHour}
 						</div>
 					</div>
-
-					{/* Pomodoro count */}
-					<div className="bg-surface-glass rounded-[8px] p-3 flex items-center justify-between">
-						<div>
-							<div className="text-xs text-text-tertiary">
-								{t("focus.total_pomodoros")}
-							</div>
-							<div className="text-base font-medium text-text-primary mt-0.5">
-								{totalPomodoros} {t("focus.sessions")}
-							</div>
+					<div className="bg-surface-glass rounded-[8px] p-3">
+						<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
+							<TrendingUp size={11} /> {t("focus.best_day")}
 						</div>
-						<div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center">
-							<Clock size={16} className="text-accent-primary" />
+						<div className="text-base font-medium text-text-primary">
+							{bestDay}
 						</div>
 					</div>
-
-					{/* AI Suggestions */}
-					<div>
-						<div className="flex items-center gap-1.5 mb-3">
-							<Lightbulb size={13} className="text-amber-400" />
-							<h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wide">
-								{t("focus.suggestions_title")}
-							</h3>
+					<div className="bg-surface-glass rounded-[8px] p-3">
+						<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
+							{t("focus.consistency_label")}
 						</div>
-						{suggestions.length === 0 && (
-							<p className="text-xs text-text-tertiary/60 italic">
-								{t("focus.no_suggestions")}
-							</p>
-						)}
-						<div className="space-y-2">
-							{suggestions.map((s, i) => (
-								<div
-									key={i}
-									className="bg-surface-glass rounded-[8px] p-3 border-l-2 border-accent-primary"
-								>
-									<p className="text-xs text-text-primary">{s.text}</p>
-									<p className="text-xs text-text-tertiary mt-0.5">
-										{s.reason}
-									</p>
-								</div>
-							))}
+						<div className="text-base font-medium text-text-primary">
+							{consistency}%
+						</div>
+					</div>
+					<div className="bg-surface-glass rounded-[8px] p-3">
+						<div className="flex items-center gap-1.5 text-xs text-text-tertiary mb-1">
+							{t("focus.avg_daily_label")}
+						</div>
+						<div className="text-base font-medium text-text-primary">
+							{avgDaily}
 						</div>
 					</div>
 				</div>
+
+				{/* Pomodoro count */}
+				<div className="bg-surface-glass rounded-[8px] p-3 flex items-center justify-between">
+					<div>
+						<div className="text-xs text-text-tertiary">
+							{t("focus.total_pomodoros")}
+						</div>
+						<div className="text-base font-medium text-text-primary mt-0.5">
+							{totalPomodoros} {t("focus.sessions")}
+						</div>
+					</div>
+					<div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center">
+						<Clock size={16} className="text-accent-primary" />
+					</div>
+				</div>
+
+				{/* AI Suggestions */}
+				<div>
+					<div className="flex items-center gap-1.5 mb-3">
+						<Lightbulb size={13} className="text-amber-400" />
+						<h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wide">
+							{t("focus.suggestions_title")}
+						</h3>
+					</div>
+					{suggestions.length === 0 && (
+						<p className="text-xs text-text-tertiary/60 italic">
+							{t("focus.no_suggestions")}
+						</p>
+					)}
+					<div className="space-y-2">
+						{suggestions.map((s) => (
+							<div
+								key={s.text}
+								className="bg-surface-glass rounded-[8px] p-3 border-l-2 border-accent-primary"
+							>
+								<p className="text-xs text-text-primary">{s.text}</p>
+								<p className="text-xs text-text-tertiary mt-0.5">{s.reason}</p>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
 		</SlideInPanel>
 	);
 }

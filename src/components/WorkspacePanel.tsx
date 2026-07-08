@@ -91,18 +91,22 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 			open={open}
 			onClose={onClose}
 			ariaLabel="Workspace settings"
-			className="w-[320px]"
+			className="w-[440px]"
+			resizable
+			defaultWidth={440}
+			minWidth={300}
+			maxWidth={800}
 		>
 			{/* Header */}
-			<div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-border-subtle">
-				<span className="text-sm font-semibold text-text-primary">
+			<div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border-subtle">
+				<h2 className="text-sm font-medium text-text-primary">
 					{t("workspace.title")}
-				</span>
+				</h2>
 				<CloseButton onClick={onClose} />
 			</div>
 
 			{/* Connection status */}
-			<div className="flex items-center gap-2 px-4 py-2 border-b border-border-subtle">
+			<div className="flex items-center gap-2 px-5 py-2 border-b border-border-subtle">
 				{online ? (
 					<Wifi size={11} className="text-green-400" />
 				) : (
@@ -128,7 +132,7 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 				{!loading && (
 					<>
 						{/* Workspace list */}
-						<div className="px-4 pt-3 pb-2">
+						<div className="px-5 pt-3 pb-2">
 							<span className="text-xs font-medium text-text-quaternary uppercase tracking-wider">
 								{t("workspace.workspaces")}
 							</span>
@@ -142,7 +146,7 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 									className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-[6px] text-xs transition-colors cursor-pointer ${
 										ws.id === activeWorkspaceId
 											? "bg-accent-subtle text-accent-primary"
-											: "text-text-secondary hover:bg-surface-secondary"
+											: "text-text-secondary hover:bg-surface-elevated"
 									} ${FOCUS_RING}`}
 								>
 									<span className="truncate flex-1 text-left">{ws.name}</span>
@@ -163,14 +167,14 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 						</div>
 
 						{/* Create workspace */}
-						<form onSubmit={handleCreate} className="px-4 pt-2 pb-3">
+						<form onSubmit={handleCreate} className="px-5 pt-2 pb-3">
 							<div className="flex gap-1.5">
 								<input
 									type="text"
 									value={newName}
 									onChange={(e) => setNewName(e.target.value)}
 									placeholder={t("workspace.new_placeholder")}
-									className="flex-1 h-8 px-2.5 text-xs bg-surface-deep border border-border-subtle rounded-[6px] text-text-primary placeholder:text-text-quaternary outline-none focus:border-accent-primary transition-colors"
+									className={`flex-1 h-8 px-2.5 text-xs bg-surface-deep border border-border-subtle rounded-[6px] text-text-primary placeholder:text-text-quaternary transition-colors ${FOCUS_RING}`}
 								/>
 								<button
 									type="submit"
@@ -192,7 +196,7 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 								<div className="border-t border-border-subtle" />
 
 								{/* Members */}
-								<div className="px-4 pt-3 pb-2 flex items-center justify-between">
+								<div className="px-5 pt-3 pb-2 flex items-center justify-between">
 									<span className="text-[11px] font-medium text-text-quaternary uppercase tracking-wider">
 										{t("workspace.members")} ({members.length})
 									</span>
@@ -219,7 +223,7 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 														e.target.value as "owner" | "admin" | "member",
 													)
 												}
-												className="text-xs bg-surface-deep border border-border-subtle rounded-[4px] px-1.5 py-0.5 text-text-secondary outline-none cursor-pointer"
+												className={`text-xs bg-surface-deep border border-border-subtle rounded-[4px] px-1.5 py-0.5 text-text-secondary cursor-pointer ${FOCUS_RING}`}
 											>
 												<option value="owner">Owner</option>
 												<option value="admin">Admin</option>
@@ -229,7 +233,10 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 												<button
 													type="button"
 													onClick={() => removeMember(m.id)}
-													className="text-text-quaternary hover:text-red-400 transition-colors cursor-pointer p-0.5"
+													className={
+														"text-text-quaternary hover:text-red-400 transition-colors cursor-pointer p-0.5 rounded-[4px] " +
+														FOCUS_RING
+													}
 												>
 													<UserMinus size={11} />
 												</button>
@@ -239,12 +246,12 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 								</div>
 
 								{/* Invite */}
-								<div className="px-4 pt-3 pb-2">
-<span className="text-xs font-medium text-text-quaternary uppercase tracking-wider">
-								{t("workspace.members")}
-							</span>
+								<div className="px-5 pt-3 pb-2">
+									<span className="text-xs font-medium text-text-quaternary uppercase tracking-wider">
+										{t("workspace.members")}
+									</span>
 								</div>
-								<form onSubmit={handleInvite} className="px-4 pb-2">
+								<form onSubmit={handleInvite} className="px-5 pb-2">
 									<div className="flex gap-1.5">
 										<div className="relative flex-1">
 											<Mail
@@ -256,13 +263,13 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 												value={inviteEmail}
 												onChange={(e) => setInviteEmail(e.target.value)}
 												placeholder={t("workspace.invite_placeholder")}
-												className="w-full h-8 pl-7 pr-2.5 text-xs bg-surface-deep border border-border-subtle rounded-[6px] text-text-primary placeholder:text-text-quaternary outline-none focus:border-accent-primary transition-colors"
+												className={`w-full h-8 pl-7 pr-2.5 text-xs bg-surface-deep border border-border-subtle rounded-[6px] text-text-primary placeholder:text-text-quaternary transition-colors ${FOCUS_RING}`}
 											/>
 										</div>
 										<button
 											type="submit"
 											disabled={!inviteEmail.trim()}
-											className="h-8 w-8 flex items-center justify-center bg-accent-primary text-white rounded-[6px] hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+											className={`h-8 w-8 flex items-center justify-center bg-accent-primary text-white rounded-[6px] hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${FOCUS_RING}`}
 										>
 											<UserPlus size={12} />
 										</button>
@@ -271,7 +278,7 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 
 								{/* Pending invites */}
 								{invites.filter((i) => i.status === "pending").length > 0 && (
-									<div className="px-4 pb-2">
+									<div className="px-5 pb-2">
 										<span className="text-xs text-text-quaternary">
 											{t("workspace.pending_invites")}
 										</span>
@@ -299,11 +306,11 @@ export function WorkspacePanel({ open, onClose }: WorkspacePanelProps) {
 
 			{/* Footer with sign out */}
 			{user && (
-				<div className="border-t border-border-subtle px-4 py-3">
+				<div className="border-t border-border-subtle px-5 py-3">
 					<button
 						type="button"
 						onClick={logout}
-						className="flex items-center gap-2 text-xs text-text-tertiary hover:text-red-400 transition-colors cursor-pointer"
+						className={`flex items-center gap-2 text-xs text-text-tertiary hover:text-red-400 transition-colors cursor-pointer rounded-[4px] ${FOCUS_RING}`}
 					>
 						<LogOut size={12} />
 						{t("auth.logout")}
