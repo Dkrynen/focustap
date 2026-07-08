@@ -121,7 +121,7 @@ export const TaskList = memo(function TaskList({
 					{doneCount}/{tasks.length} {t("common.done", "done")}
 				</span>
 				{streak && streak > 0 ? (
-					<span className="text-[11px] text-[#eab308]">
+					<span className="text-[11px] text-yellow-400">
 						{streak} {t("stats.day_streak")} 🔥
 					</span>
 				) : null}
@@ -244,7 +244,7 @@ export const TaskList = memo(function TaskList({
 										e.stopPropagation();
 										onDelete(task.id);
 									}}
-									className={`flex-shrink-0 text-text-quaternary hover:text-[#ef4444] transition-colors cursor-pointer rounded-[6px] p-0.5 ${FOCUS_RING}`}
+									className={`flex-shrink-0 text-text-quaternary hover:text-red-400 transition-colors cursor-pointer rounded-[6px] p-0.5 ${FOCUS_RING}`}
 									title={t("shortcuts.delete_task")}
 									aria-label={t("shortcuts.delete_task")}
 								>

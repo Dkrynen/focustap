@@ -43,9 +43,9 @@ export function TaskSearch({ inputRef, onSearchActive }: TaskSearchProps) {
 					}
 				}}
 				placeholder={t("common.search")}
-				className="w-full bg-surface-glass/60 text-text-primary placeholder-text-tertiary/50 backdrop-blur-sm
+				className="w-full bg-surface-glass text-text-primary placeholder-text-tertiary backdrop-blur-sm
 					   text-sm pl-9 pr-9 py-2.5 rounded-[10px]
-					   border border-border-default/50
+					   border border-border-default
 					   focus:border-accent-primary/40
 					   transition-all duration-150 font-sans
 					   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]
@@ -53,6 +53,7 @@ export function TaskSearch({ inputRef, onSearchActive }: TaskSearchProps) {
 			/>
 			{searchQuery.length > 0 && (
 				<button
+					type="button"
 					onClick={() => {
 						setSearchQuery("");
 						input.current?.focus();
