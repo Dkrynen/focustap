@@ -101,7 +101,11 @@ export function NotesPanel({ open, onClose }: NotesPanelProps) {
 			open={open}
 			onClose={handleClose}
 			ariaLabel={t("notes.title_panel")}
-			className="w-[320px] max-w-[90vw]"
+			className="w-[440px] max-w-[92vw]"
+			resizable
+			defaultWidth={440}
+			minWidth={300}
+			maxWidth={800}
 			disableEscape
 			onKeyDown={handleKeyDown}
 		>
