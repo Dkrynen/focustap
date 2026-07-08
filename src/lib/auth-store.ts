@@ -1,6 +1,11 @@
 import type { User } from "@supabase/supabase-js";
 import { create } from "zustand";
-import { getCurrentSession, signInWithMagicLink, signOut } from "./supabase";
+import {
+	getCurrentSession,
+	getSupabase,
+	signInWithMagicLink,
+	signOut,
+} from "./supabase";
 
 interface AuthState {
 	user: User | null;
@@ -13,6 +18,8 @@ interface AuthState {
 	clearError: () => void;
 }
 
+let listenerSetup = false;
+
 export const useAuthStore = create<AuthState>((set) => ({
 	user: null,
 	loading: false,
@@ -20,16 +27,39 @@ export const useAuthStore = create<AuthState>((set) => ({
 	error: null,
 
 	checkSession: async () => {
-		if (import.meta.env.VITE_SUPABASE_URL) {
-			try {
-				const session = await getCurrentSession();
-				if (session?.user) {
-					set({ user: session.user, initialized: true });
-					return;
+		if (!import.meta.env.VITE_SUPABASE_URL) {
+			set({ initialized: true });
+			return;
+		}
+
+		try {
+			const supabase = getSupabase();
+
+			// Set up onAuthStateChange listener ONCE
+			// This catches magic link redirects that detectSessionInUrl processes asynchronously
+			if (!listenerSetup) {
+				listenerSetup = true;
+				const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+					if (session?.user) {
+						set({ user: session.user, initialized: true });
+					} else {
+						set({ user: null });
+					}
+				});
+				if (data?.subscription && typeof window !== "undefined") {
+					window.addEventListener("beforeunload", () => {
+						data.subscription.unsubscribe();
+					});
 				}
-			} catch {
-				// Not configured or offline — stay unauthenticated
 			}
+
+			const session = await getCurrentSession();
+			if (session?.user) {
+				set({ user: session.user, initialized: true });
+				return;
+			}
+		} catch {
+			// Not configured or offline — stay unauthenticated
 		}
 		set({ initialized: true });
 	},
