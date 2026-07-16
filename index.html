@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FocusTap — Your tasks, one tap away.</title>
+  <meta name="description" content="A keyboard-first task manager that lives behind a hotkey. Capture, focus, and close — without ever leaving your flow." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;510;590;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --surface-deep: #050505;
+      --surface-primary: #0a0a0a;
+      --surface-secondary: #0f0f0f;
+      --surface-elevated: rgba(255, 255, 255, 0.04);
+      --surface-glass: rgba(255, 255, 255, 0.03);
+      --surface-glass-edge: rgba(255, 255, 255, 0.06);
+      --text-primary: #f0f0f0;
+      --text-secondary: #a0a0a0;
+      --text-tertiary: #666666;
+      --text-quaternary: #444444;
+      --accent-primary: #8b7eff;
+      --accent-hover: #a599ff;
+      --accent-subtle: rgba(139, 126, 255, 0.15);
+      --accent-glow: rgba(139, 126, 255, 0.08);
+      --border-subtle: rgba(255, 255, 255, 0.04);
+      --border-default: rgba(255, 255, 255, 0.07);
+      --border-strong: rgba(255, 255, 255, 0.10);
+      --status-success: #22c55e;
+      --overlay-bg: rgba(0, 0, 0, 0.7);
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-10: 40px;
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --spring-light: cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    * {
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      font-feature-settings: "cv01", "ss03";
+    }
+
+    html {
+      background: var(--surface-deep);
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--surface-deep);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    ::selection {
+      background: var(--accent-subtle);
+      color: var(--text-primary);
+    }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--surface-deep); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.10); }
+
+    .font-510 { font-weight: 510; }
+    .font-590 { font-weight: 590; }
+
+    .text-primary { color: var(--text-primary); }
+    .text-secondary { color: var(--text-secondary); }
+    .text-tertiary { color: var(--text-tertiary); }
+    .text-quaternary { color: var(--text-quaternary); }
+    .text-accent { color: var(--accent-primary); }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .glass-elevated {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+
+    .accent-glow-ring {
+      box-shadow: 0 0 0 1px var(--accent-subtle), 0 0 60px -12px var(--accent-glow);
+    }
+
+    .purple-dot {
+      background: var(--accent-primary);
+      box-shadow: 0 0 12px var(--accent-primary), 0 0 4px var(--accent-primary);
+    }
+
+    /* Entrance animations via IntersectionObserver */
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 600ms var(--ease-out-expo), transform 600ms var(--ease-out-expo);
+      will-change: opacity, transform;
+    }
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-stagger > * {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 400ms var(--ease-out-expo), transform 400ms var(--ease-out-expo);
+    }
+    .reveal-stagger.is-visible > * {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-stagger.is-visible > *:nth-child(1) { transition-delay: 0ms; }
+    .reveal-stagger.is-visible > *:nth-child(2) { transition-delay: 60ms; }
+    .reveal-stagger.is-visible > *:nth-child(3) { transition-delay: 120ms; }
+    .reveal-stagger.is-visible > *:nth-child(4) { transition-delay: 180ms; }
+    .reveal-stagger.is-visible > *:nth-child(5) { transition-delay: 240ms; }
+    .reveal-stagger.is-visible > *:nth-child(6) { transition-delay: 300ms; }
+
+    /* Magnetic CTA */
+    .btn-magnetic {
+      transition: transform 150ms var(--ease-out-expo), background-color 150ms var(--ease-out-expo), box-shadow 200ms var(--ease-out-expo);
+    }
+    .btn-magnetic:hover { transform: scale(1.02); }
+    .btn-magnetic:active { transform: scale(0.97); }
+
+    /* Feature card hover */
+    .feature-card {
+      transition: transform 200ms var(--ease-out-expo), border-color 200ms var(--ease-out-expo), background-color 200ms var(--ease-out-expo);
+    }
+    .feature-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(139, 126, 255, 0.18);
+      background-color: rgba(255,255,255,0.045);
+    }
+
+    /* App mockup float */
+    @keyframes float-subtle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .mockup-float { animation: float-subtle 8s ease-in-out infinite; }
+
+    /* Mockup task entrance */
+    @keyframes taskSlideIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Hero radial backdrop */
+    .hero-aura {
+      background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(139,126,255,0.06), transparent 70%);
+    }
+
+    /* Progress bar gradient edge */
+    .progress-fill {
+      background: linear-gradient(90deg, rgba(139,126,255,0.5), var(--accent-primary));
+    }
+
+    /* FAQ accordion */
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 300ms var(--ease-out-expo), opacity 200ms var(--ease-out-expo);
+      opacity: 0;
+    }
+    .faq-item.open .faq-answer {
+      max-height: 320px;
+      opacity: 1;
+    }
+    .faq-chevron {
+      transition: transform 200ms var(--ease-out-expo);
+    }
+    .faq-item.open .faq-chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Pro card glow border */
+    .pro-card {
+      position: relative;
+    }
+    .pro-card::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(180deg, rgba(139,126,255,0.4), rgba(139,126,255,0.05));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    .pro-card::after {
+      content: "";
+      position: absolute;
+      inset: -20px -20px auto -20px;
+      height: 120px;
+      background: radial-gradient(ellipse at top, rgba(139,126,255,0.10), transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    kbd, .kbd {
+      font-family: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+      font-feature-settings: normal;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+      .reveal, .reveal-stagger > * {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+      .mockup-float { animation: none !important; }
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'surface-deep': '#050505',
+            'surface-primary': '#0a0a0a',
+            'surface-secondary': '#0f0f0f',
+            'accent': { primary: '#8b7eff', hover: '#a599ff' },
+            'text': { primary: '#f0f0f0', secondary: '#a0a0a0', tertiary: '#666666', quaternary: '#444444' },
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          borderRadius: { 'card': '8px', 'container': '14px', 'shell': '16px' },
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-surface-deep text-text-primary">
+
+  <!-- NAV -->
+  <nav class="fixed top-0 inset-x-0 z-50">
+    <div class="mx-auto max-w-6xl px-5 sm:px-8">
+      <div class="mt-3 flex items-center justify-between rounded-shell glass px-4 sm:px-5 py-3">
+        <!-- Logo -->
+        <a href="#top" class="flex items-center gap-2.5 group">
+          <span class="relative grid place-items-center w-7 h-7 rounded-full" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+            <span class="w-2 h-2 rounded-full purple-dot"></span>
+          </span>
+          <span class="text-[15px] font-510 tracking-tight text-text-primary">FocusTap</span>
+        </a>
+        <!-- Desktop links -->
+        <div class="hidden md:flex items-center gap-8">
+          <a href="#features" class="text-[13px] text-text-secondary hover:text-text-primary transition-colors">Features</a>
+          <a href="#pricing" class="text-[13px] text-text-secondary hover:text-text-primary transition-colors">Pricing</a>
+          <a href="#faq" class="text-[13px] text-text-secondary hover:text-text-primary transition-colors">FAQ</a>
+        </div>
+        <!-- CTA + mobile toggle -->
+        <div class="flex items-center gap-2">
+          <a href="https://github.com/Dkrynen/focustap/releases/latest"
+             data-track="nav-download"
+             class="btn-magnetic hidden sm:inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-510 text-white"
+             style="background:var(--accent-primary);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+            Download
+          </a>
+          <button id="menu-toggle" aria-label="Toggle menu" class="md:hidden grid place-items-center w-9 h-9 rounded-lg" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+          </button>
+        </div>
+      </div>
+      <!-- Mobile menu -->
+      <div id="mobile-menu" class="hidden md:hidden mt-2 rounded-container glass px-4 py-3 flex-col gap-1">
+        <a href="#features" class="block py-2 text-[14px] text-text-secondary hover:text-text-primary">Features</a>
+        <a href="#pricing" class="block py-2 text-[14px] text-text-secondary hover:text-text-primary">Pricing</a>
+        <a href="#faq" class="block py-2 text-[14px] text-text-secondary hover:text-text-primary">FAQ</a>
+        <a href="https://github.com/Dkrynen/focustap/releases/latest" class="btn-magnetic mt-2 inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-[14px] font-510 text-white" style="background:var(--accent-primary);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Download
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+
+    <!-- HERO -->
+    <section class="relative pt-32 pb-20 sm:pt-40 sm:pb-28 overflow-hidden">
+      <div class="absolute inset-0 hero-aura pointer-events-none"></div>
+      <div class="relative mx-auto max-w-6xl px-5 sm:px-8">
+        <div class="flex flex-col items-center text-center">
+          <!-- eyebrow -->
+          <div class="reveal mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1.5" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06);">
+            <span class="w-1.5 h-1.5 rounded-full purple-dot"></span>
+            <span class="text-[11px] font-510 tracking-[0.06em] uppercase text-text-secondary">Keyboard-first · Local-first · 6 MB</span>
+          </div>
+          <h1 class="reveal max-w-3xl text-[clamp(2.4rem,6vw,4.25rem)] leading-[1.05] tracking-[-0.02em] font-590 text-text-primary">
+            Your tasks, one tap away.
+          </h1>
+          <p class="reveal mt-6 max-w-xl text-[16px] sm:text-[18px] leading-relaxed text-text-secondary">
+            A keyboard-first task manager that lives behind a hotkey. Capture, focus, and close — without ever leaving your flow.
+          </p>
+          <div class="reveal mt-8 flex flex-col sm:flex-row items-center gap-3">
+            <a href="https://github.com/Dkrynen/focustap/releases/latest"
+               data-track="hero-download"
+               class="btn-magnetic inline-flex items-center gap-2 rounded-full px-6 py-3 text-[14px] font-510 text-white"
+               style="background:var(--accent-primary); box-shadow:0 8px 32px -8px rgba(139,126,255,0.5);">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+              Download for Windows
+            </a>
+            <span class="text-[12px] text-text-tertiary">No account required · 6 MB · Windows x64</span>
+          </div>
+        </div>
+
+        <!-- CSS APP MOCKUP -->
+        <div class="reveal mt-16 sm:mt-20 flex justify-center">
+          <div class="mockup-float relative w-full max-w-[400px]">
+            <!-- accent glow behind -->
+            <div class="absolute -inset-x-10 -top-10 bottom-0 pointer-events-none" style="background:radial-gradient(ellipse 60% 40% at 50% 30%, rgba(139,126,255,0.10), transparent 70%); filter:blur(20px);"></div>
+
+            <!-- Outer shell -->
+            <div class="relative rounded-shell p-[1.5px]" style="background:#050505; box-shadow:0 30px 80px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.03);">
+              <!-- Inner core -->
+              <div class="rounded-[14px] overflow-hidden" style="background:#0a0a0a; box-shadow:inset 0 1px 0 rgba(255,255,255,0.06);">
+
+                <!-- Window header -->
+                <div class="flex items-center justify-between px-5 pt-4 pb-2.5">
+                  <div class="flex items-center gap-2">
+                    <span class="grid place-items-center w-5 h-5 rounded-full" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+                      <span class="block w-[6px] h-[6px] rounded-full purple-dot"></span>
+                    </span>
+                    <span class="text-[10px] font-510 tracking-[0.12em] uppercase text-text-secondary">FOCUSTAP</span>
+                  </div>
+                  <!-- streak flame -->
+                  <div class="flex items-center gap-1">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8b7eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                    <span class="text-[11px] font-510 text-text-secondary">7</span>
+                  </div>
+                </div>
+
+                <!-- Content -->
+                <div class="px-4 pb-4">
+                  <!-- Input -->
+                  <div class="flex items-center gap-2 rounded-[10px] px-3 py-2.5" style="background:rgba(255,255,255,0.03); border:1px solid rgba(139,126,255,0.18); box-shadow:0 0 0 1px rgba(139,126,255,0.10);">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span class="flex-1 text-[13px] text-text-tertiary">Add a task...</span>
+                    <button class="grid place-items-center w-6 h-6 rounded-full" style="background:var(--accent-primary);"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+                  </div>
+                  <div class="mt-1.5 text-center text-[10px] text-text-quaternary">
+                    <span class="kbd">Ctrl+Shift+Space</span> to show · <span class="kbd">Enter</span> to add
+                  </div>
+
+                  <!-- Progress bar -->
+                  <div class="mt-4 mb-3">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span class="text-[11px] text-text-secondary">Today's progress</span>
+                      <span class="text-[11px] font-510 text-text-secondary">3/5 done</span>
+                    </div>
+                    <div class="h-[3px] rounded-full overflow-hidden" style="background:rgba(255,255,255,0.05);">
+                      <div class="h-full rounded-full progress-fill" style="width:60%;"></div>
+                    </div>
+                  </div>
+
+                  <!-- Task list -->
+                  <div class="flex flex-col gap-1.5">
+                    <!-- Done task -->
+                    <div style="animation: taskSlideIn 200ms 0ms var(--ease-out-expo) both;" class="group flex items-center gap-2.5 rounded-card px-3 py-2" style="background:rgba(255,255,255,0.02);">
+                      <span class="grid place-items-center w-[18px] h-[18px] rounded-full shrink-0" style="background:var(--accent-primary); border:2px solid var(--accent-primary);">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </span>
+                      <span class="text-[13px] line-through text-text-tertiary flex-1">Reply to Sarah</span>
+                    </div>
+
+                    <!-- Done task -->
+                    <div style="animation: taskSlideIn 200ms 60ms var(--ease-out-expo) both;" class="group flex items-center gap-2.5 rounded-card px-3 py-2" style="background:rgba(255,255,255,0.02);">
+                      <span class="grid place-items-center w-[18px] h-[18px] rounded-full shrink-0" style="background:var(--accent-primary); border:2px solid var(--accent-primary);">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </span>
+                      <span class="text-[13px] line-through text-text-tertiary flex-1">Pick up milk</span>
+                    </div>
+
+                    <!-- Active NLP task -->
+                    <div style="animation: taskSlideIn 200ms 120ms var(--ease-out-expo) both;" class="group flex items-center gap-2.5 rounded-card px-3 py-2" style="background:rgba(255,255,255,0.035); border:1px solid rgba(139,126,255,0.10);">
+                      <span class="w-[18px] h-[18px] rounded-full shrink-0" style="border:2px solid rgba(255,255,255,0.15);"></span>
+                      <span class="flex-1 text-[13px] text-text-primary">Finish Q3 report</span>
+                      <span class="w-[7px] h-[7px] rounded-full" style="background:#8b7eff; box-shadow:0 0 6px rgba(139,126,255,0.6);" title="High priority"></span>
+                      <span class="kbd text-[10px] font-510 px-1.5 py-0.5 rounded" style="background:rgba(139,126,255,0.12); color:#a599ff;">#work</span>
+                    </div>
+
+                    <!-- Plain task -->
+                    <div style="animation: taskSlideIn 200ms 180ms var(--ease-out-expo) both;" class="group flex items-center gap-2.5 rounded-card px-3 py-2" style="background:rgba(255,255,255,0.02);">
+                      <span class="w-[18px] h-[18px] rounded-full shrink-0" style="border:2px solid rgba(255,255,255,0.15);"></span>
+                      <span class="text-[13px] text-text-primary flex-1">Review PR #284</span>
+                    </div>
+
+                    <!-- Plain task -->
+                    <div style="animation: taskSlideIn 200ms 240ms var(--ease-out-expo) both;" class="group flex items-center gap-2.5 rounded-card px-3 py-2" style="background:rgba(255,255,255,0.02);">
+                      <span class="w-[18px] h-[18px] rounded-full shrink-0" style="border:2px solid rgba(255,255,255,0.15);"></span>
+                      <span class="text-[13px] text-text-primary flex-1">Water the plants</span>
+                    </div>
+                  </div>
+
+                  <!-- Pomodoro timer -->
+                  <div class="mt-3 flex items-center gap-3 rounded-[10px] px-3 py-2.5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04);">
+                    <div class="relative w-[34px] h-[34px] shrink-0">
+                      <svg width="34" height="34" viewBox="0 0 34 34">
+                        <circle cx="17" cy="17" r="14" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2.5"/>
+                        <circle cx="17" cy="17" r="14" fill="none" stroke="#8b7eff" stroke-width="2.5" stroke-linecap="round"
+                                stroke-dasharray="87.96" stroke-dashoffset="38" transform="rotate(-90 17 17)"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-[13px] font-510 text-text-primary">14:32</div>
+                      <div class="text-[10px] text-text-tertiary">Focus session · Finish Q3 report</div>
+                    </div>
+                    <button class="grid place-items-center w-6 h-6 rounded-full" style="background:rgba(139,126,255,0.12);">
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="#a599ff"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROBLEM / SOLUTION -->
+    <section class="relative py-20 sm:py-28">
+      <div class="mx-auto max-w-2xl px-5 sm:px-8 text-center">
+        <p class="reveal text-[18px] sm:text-[20px] leading-relaxed text-text-secondary">
+          You're mid-task. A thought surfaces — <em class="text-text-primary not-italic">reply to Sarah, finish the report, pick up milk</em>. It'll be gone in 30 seconds. You could open a to-do app, click through three menus, and by then you've lost your train of thought. Or you could hit one key, type it, and keep going.
+        </p>
+        <p class="reveal mt-8 text-[20px] sm:text-[24px] leading-snug font-590 tracking-[-0.01em] text-text-primary">
+          FocusTap is built for that moment.
+        </p>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features" class="relative py-20 sm:py-28">
+      <div class="mx-auto max-w-6xl px-5 sm:px-8">
+        <div class="reveal max-w-2xl mb-12 sm:mb-16">
+          <div class="text-[11px] font-510 tracking-[0.08em] uppercase text-accent-primary mb-3">Features</div>
+          <h2 class="text-[clamp(1.8rem,4vw,2.75rem)] leading-[1.1] tracking-[-0.02em] font-590 text-text-primary">
+            Built for the way your mind actually works.
+          </h2>
+        </div>
+
+        <div class="reveal reveal-stagger grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          <!-- 1. Instant Capture -->
+          <div class="feature-card glass rounded-card p-6">
+            <div class="grid place-items-center w-10 h-10 rounded-card mb-5" style="background:rgba(139,126,255,0.10); border:1px solid rgba(139,126,255,0.15);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b7eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12"/></svg>
+            </div>
+            <h3 class="text-[17px] font-590 tracking-[-0.01em] text-text-primary mb-2">One hotkey. Zero friction.</h3>
+            <p class="text-[14px] leading-relaxed text-text-secondary">
+              Hit <span class="kbd text-[12px] px-1.5 py-0.5 rounded" style="background:rgba(255,255,255,0.05);">Ctrl+Shift+Space</span> from anywhere — a code editor, a browser, a PDF. FocusTap appears. Type your task. Hit Enter. It's gone. Back to what you were doing, no context switch, no app to close.
+            </p>
+            <p class="mt-3 text-[13px] leading-relaxed text-text-tertiary">
+              Natural language input parses priority and tags inline. Type <span class="text-text-secondary">Finish Q3 report !h #work</span> and FocusTap sets priority to High and tags it #work automatically.
+            </p>
+          </div>
+
+          <!-- 2. Wandering Minds -->
+          <div class="feature-card glass rounded-card p-6">
+            <div class="grid place-items-center w-10 h-10 rounded-card mb-5" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            </div>
+            <h3 class="text-[17px] font-590 tracking-[-0.01em] text-text-primary mb-2">Designed with ADHD in brain.</h3>
+            <p class="text-[14px] leading-relaxed text-text-secondary">
+              Every interaction is optimized for the way distractible brains actually work — not how productivity books say they should. No punishment mechanics. No streak guilt. No overwhelming dashboards. Just a calm, dark surface that waits patiently until you need it.
+            </p>
+          </div>
+
+          <!-- 3. Focus Timer -->
+          <div class="feature-card glass rounded-card p-6">
+            <div class="grid place-items-center w-10 h-10 rounded-card mb-5" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6M12 2v2"/></svg>
+            </div>
+            <h3 class="text-[17px] font-590 tracking-[-0.01em] text-text-primary mb-2">Pomodoro without the tab.</h3>
+            <p class="text-[14px] leading-relaxed text-text-secondary">
+              Start a focus session on any task with <span class="kbd text-[12px] px-1.5 py-0.5 rounded" style="background:rgba(255,255,255,0.05);">Ctrl+Shift+P</span>. A clean progress ring counts down. When the session ends, a gentle chime — not a blaring alarm — signals the break. Work and break durations are customizable.
+            </p>
+          </div>
+
+          <!-- 4. See Your Patterns -->
+          <div class="feature-card glass rounded-card p-6">
+            <div class="grid place-items-center w-10 h-10 rounded-card mb-5" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+            </div>
+            <h3 class="text-[17px] font-590 tracking-[-0.01em] text-text-primary mb-2">Understand when you actually work.</h3>
+            <p class="text-[14px] leading-relaxed text-text-secondary">
+              FocusTap tracks when you complete tasks and run focus sessions, then surfaces the patterns: your most productive hour, your best day of the week, your consistency score. A GitHub-style streak calendar shows your progress at a glance — without turning into a guilt trip on off days.
+            </p>
+          </div>
+
+          <!-- 5. Calendar Sync -->
+          <div class="feature-card glass rounded-card p-6">
+            <div class="grid place-items-center w-10 h-10 rounded-card mb-5" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+              <h3 class="text-[17px] font-590 tracking-[-0.01em] text-text-primary">Your tasks, on your calendar.</h3>
+              <span class="text-[10px] font-510 tracking-[0.04em] uppercase px-1.5 py-0.5 rounded text-accent-primary" style="background:rgba(139,126,255,0.12);">Pro</span>
+            </div>
+            <p class="text-[14px] leading-relaxed text-text-secondary">
+              Connect Google Calendar or Microsoft 365. FocusTap pulls events into your day view and pushes tasks with due dates to your calendar — two-way sync, no manual duplication. OAuth tokens stored in your OS keychain, never in a database.
+            </p>
+          </div>
+
+          <!-- 6. Themes -->
+          <div class="feature-card glass rounded-card p-6">
+            <div class="grid place-items-center w-10 h-10 rounded-card mb-5" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="#f0f0f0"/><circle cx="17.5" cy="10.5" r=".5" fill="#f0f0f0"/><circle cx="8.5" cy="7.5" r=".5" fill="#f0f0f0"/><circle cx="6.5" cy="12.5" r=".5" fill="#f0f0f0"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+            </div>
+            <h3 class="text-[17px] font-590 tracking-[-0.01em] text-text-primary mb-2">Five presets. Zero Comic Sans.</h3>
+            <p class="text-[14px] leading-relaxed text-text-secondary">
+              Midnight (the default OLED-dark glassmorphism), Aurora (deep blue with teal accents), Sepia (warm paper tones for eye comfort), Evergreen (forest green calm), and Monochrome (pure grayscale minimalism). Each works in dark and light modes.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section id="pricing" class="relative py-20 sm:py-28">
+      <div class="mx-auto max-w-5xl px-5 sm:px-8">
+        <div class="reveal max-w-2xl mb-12 sm:mb-16 mx-auto text-center">
+          <div class="text-[11px] font-510 tracking-[0.08em] uppercase text-accent-primary mb-3">Pricing</div>
+          <h2 class="text-[clamp(1.8rem,4vw,2.75rem)] leading-[1.1] tracking-[-0.02em] font-590 text-text-primary">
+            Free forever. Pay once if you want more.
+          </h2>
+          <p class="mt-4 text-[15px] text-text-secondary">Everything local is and will remain free. Pro features are additive.</p>
+        </div>
+
+        <div class="reveal grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+
+          <!-- Free -->
+          <div class="glass rounded-container p-7 sm:p-8 flex flex-col">
+            <div class="flex items-baseline justify-between mb-1">
+              <h3 class="text-[18px] font-590 text-text-primary">Free</h3>
+              <span class="text-[11px] font-510 tracking-[0.04em] uppercase text-text-tertiary">Core product</span>
+            </div>
+            <p class="text-[14px] text-text-secondary mb-6">Everything you need to capture and focus.</p>
+            <div class="mb-6">
+              <span class="text-[40px] font-590 tracking-[-0.02em] text-text-primary">$0</span>
+              <span class="text-[14px] text-text-tertiary ml-1">free, forever</span>
+            </div>
+            <ul class="flex-1 flex flex-col gap-3 mb-8">
+              <li class="flex items-start gap-2.5 text-[14px] text-text-secondary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Unlimited tasks, subtasks, and notes</li>
+              <li class="flex items-start gap-2.5 text-[14px] text-text-secondary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Pomodoro timer with custom durations</li>
+              <li class="flex items-start gap-2.5 text-[14px] text-text-secondary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>5 themes with dark/light modes</li>
+              <li class="flex items-start gap-2.5 text-[14px] text-text-secondary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Focus analytics (streaks, heatmap, trends)</li>
+              <li class="flex items-start gap-2.5 text-[14px] text-text-secondary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Markdown and CSV export</li>
+              <li class="flex items-start gap-2.5 text-[14px] text-text-secondary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Global hotkey, keyboard navigation, quick search</li>
+              <li class="flex items-start gap-2.5 text-[14px] text-text-secondary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Local SQLite storage — no account, no cloud</li>
+            </ul>
+            <a href="https://github.com/Dkrynen/focustap/releases/latest" data-track="pricing-free"
+               class="btn-magnetic w-full inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-[14px] font-510 text-text-primary" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10);">
+              Download free
+            </a>
+          </div>
+
+          <!-- Pro -->
+          <div class="pro-card glass-elevated rounded-container p-7 sm:p-8 flex flex-col">
+            <div class="flex items-baseline justify-between mb-1">
+              <div class="flex items-center gap-2">
+                <h3 class="text-[18px] font-590 text-text-primary">Pro</h3>
+                <span class="text-[10px] font-510 tracking-[0.04em] uppercase px-1.5 py-0.5 rounded text-accent-primary" style="background:rgba(139,126,255,0.15);">For power users</span>
+              </div>
+            </div>
+            <p class="text-[14px] text-text-secondary mb-6">For power users who want more.</p>
+            <div class="mb-6 flex items-baseline gap-3">
+              <div>
+                <span class="text-[40px] font-590 tracking-[-0.02em] text-text-primary">$19</span>
+                <span class="text-[14px] text-text-tertiary ml-1">one-time</span>
+              </div>
+              <span class="text-[13px] text-text-quaternary">or $3/mo</span>
+            </div>
+            <ul class="flex-1 flex flex-col gap-3 mb-8">
+              <li class="text-[11px] font-510 tracking-[0.04em] uppercase text-text-tertiary">Everything in Free, plus:</li>
+              <li class="flex items-start gap-2.5 text-[14px] text-text-primary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b7eff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><span class="font-590">Calendar sync</span> — Two-way Google Calendar and Microsoft 365 integration</span></li>
+              <li class="flex items-start gap-2.5 text-[14px] text-text-primary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b7eff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><span class="font-590">Cross-device sync</span> — Supabase-backed sync across all your machines</span></li>
+              <li class="flex items-start gap-2.5 text-[14px] text-text-primary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b7eff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><span class="font-590">Encrypted token storage</span> — OAuth credentials in your OS keychain, never plaintext</span></li>
+              <li class="flex items-start gap-2.5 text-[14px] text-text-primary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b7eff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><span class="font-590">Priority support</span> — Direct email, fast responses</span></li>
+              <li class="flex items-start gap-2.5 text-[14px] text-text-primary"><svg class="mt-0.5 shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b7eff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><span class="font-590">Future Pro features</span> — Everything we build for Pro is included</span></li>
+            </ul>
+            <a href="https://github.com/Dkrynen/focustap/releases/latest" data-track="pricing-pro"
+               class="btn-magnetic w-full inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-[14px] font-590 text-white" style="background:var(--accent-primary); box-shadow:0 8px 24px -8px rgba(139,126,255,0.5);">
+              Get Pro — $19 lifetime
+            </a>
+            <p class="mt-3 text-center text-[12px] text-text-tertiary">Cancel anytime on the monthly plan</p>
+          </div>
+        </div>
+
+        <!-- Pricing FAQ mini -->
+        <div class="reveal mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="rounded-card p-5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04);">
+            <p class="text-[13px] font-590 text-text-primary mb-1.5">Is the free tier going to get worse?</p>
+            <p class="text-[13px] leading-relaxed text-text-tertiary">No. The free tier is the core product. Pro features are additive.</p>
+          </div>
+          <div class="rounded-card p-5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04);">
+            <p class="text-[13px] font-590 text-text-primary mb-1.5">What if I stop paying?</p>
+            <p class="text-[13px] leading-relaxed text-text-tertiary">Nothing changes. Your tasks are local. Calendar sync pauses, everything else stays.</p>
+          </div>
+          <div class="rounded-card p-5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04);">
+            <p class="text-[13px] font-590 text-text-primary mb-1.5">Why lifetime?</p>
+            <p class="text-[13px] leading-relaxed text-text-tertiary">Because we hate being held hostage by subscriptions too. $19 once, and it's yours.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="relative py-20 sm:py-28">
+      <div class="mx-auto max-w-3xl px-5 sm:px-8">
+        <div class="reveal mb-12 sm:mb-16 text-center">
+          <div class="text-[11px] font-510 tracking-[0.08em] uppercase text-accent-primary mb-3">FAQ</div>
+          <h2 class="text-[clamp(1.8rem,4vw,2.75rem)] leading-[1.1] tracking-[-0.02em] font-590 text-text-primary">
+            Questions, answered.
+          </h2>
+        </div>
+
+        <div class="reveal flex flex-col gap-3">
+
+          <div class="faq-item glass rounded-card overflow-hidden">
+            <button class="faq-trigger w-full flex items-center justify-between gap-4 px-5 py-4 text-left">
+              <span class="text-[15px] font-590 text-text-primary">Is FocusTap open source?</span>
+              <svg class="faq-chevron shrink-0 text-text-tertiary" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer px-5"><p class="pb-4 text-[14px] leading-relaxed text-text-secondary">The source is available on GitHub under the MIT license. The compiled binary includes Pro features that require a license key to activate.</p></div>
+          </div>
+
+          <div class="faq-item glass rounded-card overflow-hidden">
+            <button class="faq-trigger w-full flex items-center justify-between gap-4 px-5 py-4 text-left">
+              <span class="text-[15px] font-590 text-text-primary">Does FocusTap work on Mac/Linux?</span>
+              <svg class="faq-chevron shrink-0 text-text-tertiary" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer px-5"><p class="pb-4 text-[14px] leading-relaxed text-text-secondary">Windows is the primary platform. macOS and Linux builds are technically possible (it's Tauri, not Electron) but not yet tested or distributed. They're on the roadmap.</p></div>
+          </div>
+
+          <div class="faq-item glass rounded-card overflow-hidden">
+            <button class="faq-trigger w-full flex items-center justify-between gap-4 px-5 py-4 text-left">
+              <span class="text-[15px] font-590 text-text-primary">Does FocusTap track me?</span>
+              <svg class="faq-chevron shrink-0 text-text-tertiary" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer px-5"><p class="pb-4 text-[14px] leading-relaxed text-text-secondary">Analytics are opt-in and anonymous. We track aggregate events (task created, session completed) — never task content, titles, or personal data. You can turn it off entirely in Settings &gt; Privacy.</p></div>
+          </div>
+
+          <div class="faq-item glass rounded-card overflow-hidden">
+            <button class="faq-trigger w-full flex items-center justify-between gap-4 px-5 py-4 text-left">
+              <span class="text-[15px] font-590 text-text-primary">How is this different from Todoist/Things/TickTick?</span>
+              <svg class="faq-chevron shrink-0 text-text-tertiary" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer px-5"><p class="pb-4 text-[14px] leading-relaxed text-text-secondary">Those are full-featured task managers with projects, labels, filters, and collaboration. FocusTap is a capture-and-focus tool — it's faster to input, simpler to use, and designed specifically for people who get overwhelmed by feature-rich apps. Think of it as the complement to your main task manager, not a replacement.</p></div>
+          </div>
+
+          <div class="faq-item glass rounded-card overflow-hidden">
+            <button class="faq-trigger w-full flex items-center justify-between gap-4 px-5 py-4 text-left">
+              <span class="text-[15px] font-590 text-text-primary">How is this different from a notes app?</span>
+              <svg class="faq-chevron shrink-0 text-text-tertiary" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer px-5"><p class="pb-4 text-[14px] leading-relaxed text-text-secondary">Notes apps are for thinking. FocusTap is for doing. The input is faster (one key, type, enter), the feedback is more immediate (checkmark bounce, streak glow), and the focus timer keeps you on one task instead of rabbit-holing through notes.</p></div>
+          </div>
+
+          <div class="faq-item glass rounded-card overflow-hidden">
+            <button class="faq-trigger w-full flex items-center justify-between gap-4 px-5 py-4 text-left">
+              <span class="text-[15px] font-590 text-text-primary">Can I use it with my existing task manager?</span>
+              <svg class="faq-chevron shrink-0 text-text-tertiary" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer px-5"><p class="pb-4 text-[14px] leading-relaxed text-text-secondary">Yes. Many users keep FocusTap for quick capture during the day, then review and organize in their main tool. CSV/Markdown export makes bulk transfer easy.</p></div>
+          </div>
+
+        </div>
+
+        <!-- Keyboard shortcuts preview -->
+        <div class="reveal mt-8 glass rounded-card p-5">
+          <p class="text-[13px] font-590 text-text-primary mb-3">What's the keyboard shortcut?</p>
+          <div class="flex flex-wrap gap-2.5 text-[12px]">
+            <span class="inline-flex items-center gap-1.5"><span class="kbd px-2 py-1 rounded text-[11px]" style="background:rgba(255,255,255,0.05);">Ctrl+Shift+Space</span><span class="text-text-tertiary">show/hide</span></span>
+            <span class="text-text-quaternary">·</span>
+            <span class="inline-flex items-center gap-1.5"><span class="kbd px-2 py-1 rounded text-[11px]" style="background:rgba(255,255,255,0.05);">Ctrl+F</span><span class="text-text-tertiary">search</span></span>
+            <span class="text-text-quaternary">·</span>
+            <span class="inline-flex items-center gap-1.5"><span class="kbd px-2 py-1 rounded text-[11px]" style="background:rgba(255,255,255,0.05);">Ctrl+Shift+P</span><span class="text-text-tertiary">pomodoro</span></span>
+            <span class="text-text-quaternary">·</span>
+            <span class="inline-flex items-center gap-1.5"><span class="kbd px-2 py-1 rounded text-[11px]" style="background:rgba(255,255,255,0.05);">?</span><span class="text-text-tertiary">all shortcuts</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD CTA -->
+    <section class="relative py-24 sm:py-32 overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 60% 50% at 50% 50%, rgba(139,126,255,0.08), transparent 70%);"></div>
+      <div class="relative mx-auto max-w-2xl px-5 sm:px-8 text-center">
+        <div class="flex justify-center mb-6">
+          <span class="relative grid place-items-center w-12 h-12 rounded-full" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+            <span class="block w-3 h-3 rounded-full purple-dot"></span>
+          </span>
+        </div>
+        <h2 class="reveal text-[clamp(2rem,5vw,3rem)] leading-[1.1] tracking-[-0.02em] font-590 text-text-primary">
+          Try FocusTap free
+        </h2>
+        <p class="reveal mt-4 text-[16px] text-text-secondary">
+          No account required. 6 MB. Windows x64.
+        </p>
+        <div class="reveal mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <a href="https://github.com/Dkrynen/focustap/releases/latest"
+             data-track="cta-download"
+             class="btn-magnetic inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-[15px] font-590 text-white"
+             style="background:var(--accent-primary); box-shadow:0 12px 40px -10px rgba(139,126,255,0.6);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+            Download for Windows
+          </a>
+          <a href="https://github.com/Dkrynen/focustap" class="btn-magnetic inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-[14px] font-590 text-text-primary" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+            View on GitHub
+          </a>
+        </div>
+
+        <!-- Waitlist / notify-me form (Turnstile-protected; requires VITE_TURNSTILE_* on the deployed worker) -->
+        <form id="waitlist-form" class="reveal mx-auto mt-10 w-full max-w-md flex flex-col gap-3" data-turnstile-worker-url="">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="you@example.com"
+              aria-label="Email address"
+              class="flex-1 h-11 px-4 text-[14px] rounded-full text-text-primary bg-surface-secondary border border-border-default placeholder:text-text-quaternary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]"
+            />
+            <button
+              type="submit"
+              class="btn-magnetic h-11 px-6 text-[14px] font-590 text-white rounded-full"
+              style="background:var(--accent-primary);"
+            >
+              Notify me
+            </button>
+          </div>
+          <div class="cf-turnstile" data-sitekey="" data-action="waitlist-signup" data-callback="__focustapLandingCallback"></div>
+          <p id="waitlist-status" class="text-[13px] text-center min-h-[18px]" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t" style="border-color:rgba(255,255,255,0.04);">
+    <div class="mx-auto max-w-6xl px-5 sm:px-8 py-10">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-5">
+        <div class="flex items-center gap-2.5">
+          <span class="grid place-items-center w-6 h-6 rounded-full" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+            <span class="block w-[5px] h-[5px] rounded-full purple-dot"></span>
+          </span>
+          <span class="text-[14px] font-510 tracking-tight text-text-primary">FocusTap</span>
+          <span class="text-[12px] text-text-quaternary ml-1">MIT licensed</span>
+        </div>
+        <div class="flex items-center gap-6">
+          <a href="https://github.com/Dkrynen/focustap" class="text-[13px] text-text-secondary hover:text-text-primary transition-colors">GitHub</a>
+          <a href="https://github.com/Dkrynen/focustap/releases/latest" class="text-[13px] text-text-secondary hover:text-text-primary transition-colors">Releases</a>
+          <span class="text-[12px] text-text-quaternary">© 2025 FocusTap</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    (function() {
+      const toggle = document.getElementById('menu-toggle');
+      const menu = document.getElementById('mobile-menu');
+      if (!toggle || !menu) return;
+      toggle.addEventListener('click', function() {
+        const isHidden = menu.classList.contains('hidden');
+        if (isHidden) {
+          menu.classList.remove('hidden');
+          menu.classList.add('flex');
+        } else {
+          menu.classList.add('hidden');
+          menu.classList.remove('flex');
+        }
+      });
+      menu.querySelectorAll('a').forEach(function(a) {
+        a.addEventListener('click', function() {
+          menu.classList.add('hidden');
+          menu.classList.remove('flex');
+        });
+      });
+    })();
+
+    // FAQ accordion
+    (function() {
+      const items = document.querySelectorAll('.faq-item');
+      items.forEach(function(item) {
+        const trigger = item.querySelector('.faq-trigger');
+        if (!trigger) return;
+        trigger.addEventListener('click', function() {
+          const isOpen = item.classList.contains('open');
+          items.forEach(function(other) { other.classList.remove('open'); });
+          if (!isOpen) item.classList.add('open');
+        });
+      });
+    })();
+
+    // IntersectionObserver reveals
+    (function() {
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const targets = document.querySelectorAll('.reveal');
+      if (prefersReduced) {
+        targets.forEach(function(el) { el.classList.add('is-visible'); });
+        return;
+      }
+      if (!('IntersectionObserver' in window)) {
+        targets.forEach(function(el) { el.classList.add('is-visible'); });
+        return;
+      }
+      const io = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+      targets.forEach(function(el) { io.observe(el); });
+    })();
+
+    // Download button tracking (no external services — console only)
+    (function() {
+      const tracked = document.querySelectorAll('[data-track]');
+      tracked.forEach(function(el) {
+        el.addEventListener('click', function() {
+          const label = el.getAttribute('data-track');
+          if (label) console.log('[FocusTap] download intent:', label);
+        });
+      });
+    })();
+
+    // Waitlist form: verify Turnstile, then POST to the configured worker.
+    // Fails closed — no token or failed verification blocks submission.
+    (function() {
+      const form = document.getElementById('waitlist-form');
+      if (!form) return;
+      const workerUrl = form.getAttribute('data-turnstile-worker-url') || '';
+      const statusEl = document.getElementById('waitlist-status');
+      const input = form.querySelector('input[type="email"]');
+      let token = '';
+
+      window.__focustapLandingCallback = function(t) { token = t; };
+
+      // Load the Turnstile script only if a sitekey is present (set at deploy time).
+      const sitekeyEl = document.querySelector('.cf-turnstile[data-action="waitlist-signup"]');
+      if (sitekeyEl && sitekeyEl.getAttribute('data-sitekey')) {
+        if (!document.getElementById('cf-turnstile-script')) {
+          const s = document.createElement('script');
+          s.id = 'cf-turnstile-script';
+          s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+          s.async = true;
+          s.defer = true;
+          document.head.appendChild(s);
+        }
+      }
+
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!input.value.trim()) return;
+        statusEl.textContent = '';
+        statusEl.style.color = 'var(--text-tertiary)';
+
+        if (!workerUrl) {
+          statusEl.textContent = 'Signup is not configured yet. Check back soon.';
+          return;
+        }
+        if (!token) {
+          statusEl.textContent = 'Please complete the verification challenge.';
+          statusEl.style.color = '#f87171';
+          return;
+        }
+
+        try {
+          const res = await fetch(workerUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: token, email: input.value.trim() })
+          });
+          const data = await res.json().catch(function() { return {}; });
+          if (data.success === true) {
+            statusEl.textContent = 'Thanks! We\'ll let you know when something ships.';
+            statusEl.style.color = 'var(--status-success)';
+            form.reset();
+            token = '';
+          } else {
+            statusEl.textContent = 'Verification failed. Please try again.';
+            statusEl.style.color = '#f87171';
+          }
+        } catch {
+          statusEl.textContent = 'Something went wrong. Please try again.';
+          statusEl.style.color = '#f87171';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
